@@ -59,7 +59,8 @@ var IkeaDisplayUtils = (function () {
             totalLocalPrice += item.localPriceNum;
 
             let cheapestPrice = item.localPriceNum;
-            let cheapestCountry = 'Czech Republic';
+            let cheapestCountry = 'Česko';
+            let cheapestUrl = item.url;  // todo: this is probably undefined
 
             item.adjustedComparisonResults.forEach(result => {
                 if (!unavailableCounts[result.name]) {
@@ -83,6 +84,7 @@ var IkeaDisplayUtils = (function () {
                 if (convertedPrice < cheapestPrice) {
                     cheapestPrice = convertedPrice;
                     cheapestCountry = result.name;
+                    cheapestUrl = result.url;
                 }
             });
 
@@ -91,7 +93,8 @@ var IkeaDisplayUtils = (function () {
                 productName: item.productName,
                 country: cheapestCountry,
                 price: cheapestPrice,
-                saving: item.localPriceNum - cheapestPrice
+                saving: item.localPriceNum - cheapestPrice,
+                url: cheapestUrl,
             });
         });
 
@@ -99,21 +102,40 @@ var IkeaDisplayUtils = (function () {
     }
 
     function generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy) {
-        let html = '<strong>Shrnutí úspor:</strong><br><br>';
-        for (const [country, savings] of Object.entries(totalSavings)) {
+        let html = '<h3 style="font-size: 1.35rem;">Shrnutí úspor:</h3><br>';
+        html += '<strong style="font-size: 1.2rem;">Celý nákup v jedné zemi:</strong><br><br>';
+
+        const sortedSavings = Object.entries(totalSavings).sort((a, b) => b[1] - a[1]);
+        for (const [country, savings] of sortedSavings) {
             const unavailableCount = unavailableCounts[country];
-            html += `Úspora při nákupu všeho v IKEA ${country}: ${IkeaPriceUtils.formatPrice(savings)}`;
+            html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : ''}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings)}</span>`;
             if (unavailableCount > 0) {
-                html += ` (${unavailableCount} ${unavailableCount === 1 ? 'položka není dostupná' : 'položky nejsou dostupné'})`;
-                html += ` <a href="#" class="show-unavailable" data-country="${country}">Zobrazit nedostupné položky</a>`;
+                html += ` <a href="#" class="show-unavailable" style="font-size: 0.8rem;" data-country="${country}">(${unavailableCount} ${unavailableCount === 1 ? 'položka nedostupná' : 'položky nedostupné'})</a>`;
             }
             html += '<br>';
         }
-        html += `<br><strong>Optimální úspora při nákupu z nejlevnější země pro každý produkt: ${IkeaPriceUtils.formatPrice(optimalSavings)}</strong>`;
-        html += '<br><br><strong>Optimální strategie nákupu:</strong><br>';
+        html += `<br><strong>Maximální úspora:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span>`;
+        html += '<br><br><strong style="font-size: 1.2rem;">Optimální strategie nákupu:</strong><br><br>';
+        const groupedItems = {};
         optimalPurchaseStrategy.forEach(item => {
-            html += `${item.productName}: Koupit v ${item.country} za ${IkeaPriceUtils.formatPrice(item.price)} (úspora ${IkeaPriceUtils.formatPrice(item.saving)})<br>`;
+            if (!groupedItems[item.country]) {
+                groupedItems[item.country] = [];
+            }
+            groupedItems[item.country].push(item);
         });
+
+        for (const country in groupedItems) {
+            html += `<strong>${country}:</strong><br>`;
+            html += `<ul style="margin-left: 1em;">`;
+            groupedItems[country].forEach(item => {
+                html += `<li><a href="${item.url}" target="_blank">${item.productName}</a>:<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`
+                if (country !== 'Česko') {
+                    html += ` <span style="white-space: nowrap; color: green; font-size: 0.8rem;">(-${IkeaPriceUtils.formatPrice(item.saving)})</span>`;
+                }
+            });
+            html += '';
+            html += `</ul><br>`;
+        }
 
         return html;
     }

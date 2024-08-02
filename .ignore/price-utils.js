@@ -4,7 +4,6 @@ var IkeaPriceUtils = (function () {
         { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },
         { country: 'de', language: 'de', name: 'Německo', currencyCode: 'EUR' },
         { country: 'at', language: 'de', name: 'Rakousko', currencyCode: 'EUR' },
-        { country: 'sk', language: 'sk', name: 'Slovensko', currencyCode: 'EUR' },
     ];
 
     function fetchForeignPrices(productId) {

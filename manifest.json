@@ -20,6 +20,8 @@
                 "https://*.ikea.com/*/shoppingcart/"
             ],
             "js": [
+                "product.js",
+                "cart-item.js",
                 "exchange-rates.js",
                 "price-utils.js",
                 "dom-utils.js",

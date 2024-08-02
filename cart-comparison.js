@@ -1,13 +1,26 @@
-// cart-comparison.js
 var IkeaCartComparison = (function () {
     async function compareCartPrices() {
         const cartItems = document.querySelectorAll('.product_product__pvcUf');
-        const comparisonPromises = Array.from(cartItems).map(compareCartItemPrices);
-        const comparisonResults = await Promise.all(comparisonPromises);
-        return comparisonResults; // Return the results so we can use them in main.js
+        const cartItemObjects = Array.from(cartItems).map(createCartItem);
+        await Promise.all(cartItemObjects.map(item => item.fetchForeignPrices()));
+        const comparisonResults = cartItemObjects.map(item => ({
+            localPriceNum: item.localPrice * item.quantity,
+            adjustedComparisonResults: item.getComparisonData(),
+            quantity: item.quantity,
+            productName: item.productName
+        }));
+        comparisonResults.forEach((result, index) => {
+            IkeaDisplayUtils.displayCartItemComparison(
+                result.localPriceNum,
+                result.adjustedComparisonResults,
+                cartItems[index],
+                result.quantity
+            );
+        });
+        return comparisonResults;
     }
 
-    async function compareCartItemPrices(itemElement) {
+    function createCartItem(itemElement) {
         const productUrl = itemElement.querySelector('.cart-ingka-price-module__name a').href;
         const productId = productUrl.split('-').pop();
         const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
@@ -18,22 +31,12 @@ var IkeaCartComparison = (function () {
         const quantity = parseInt(itemElement.querySelector('.cart-ingka-quantity-stepper__input').value);
         const localPriceNum = parseFloat(localPrice.replace(/[^0-9.,]/g, '').replace(',', '.'));
         const localPricePerItem = localPriceNum / quantity;
-        const comparisonResults = await IkeaPriceUtils.fetchForeignPrices(productId);
 
         const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
         const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
         const productName = `${nameElement.textContent.trim()} - ${descriptionElement.textContent.trim()}`;
 
-        const adjustedComparisonResults = comparisonResults.map(result => ({
-            ...result,
-            price: result.price !== null
-                ? (parseFloat(result.price.replace(/[^0-9.,]/g, '').replace(',', '.')) * quantity).toFixed(2)
-                : null,
-            isAvailable: result.price !== null
-        }));
-
-        IkeaDisplayUtils.displayCartItemComparison(localPriceNum, adjustedComparisonResults, itemElement, quantity);
-        return { localPriceNum, adjustedComparisonResults, quantity, productName };
+        return new CartItem(productName, productId, localPricePerItem, quantity);
     }
 
     return {

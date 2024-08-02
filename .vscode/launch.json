@@ -5,8 +5,8 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome",
-            "url": "https://www.ikea.com/cz/cs/p/hyltarp-3mistna-pohovka-hallarp-bila-s49489640/",
-            // "url": "https://www.ikea.com/cz/cs/shoppingcart/",
+            // "url": "https://www.ikea.com/cz/cs/p/hyltarp-3mistna-pohovka-hallarp-bila-s49489640/",
+            "url": "https://www.ikea.com/cz/cs/shoppingcart/",
             "runtimeArgs": [
                 "--load-extension=${workspaceFolder}"
             ]
