@@ -4,7 +4,7 @@ var IkeaCartComparison = (function () {
         const cartItems = document.querySelectorAll('.product_product__pvcUf');
         const comparisonPromises = Array.from(cartItems).map(compareCartItemPrices);
         const comparisonResults = await Promise.all(comparisonPromises);
-        IkeaDisplayUtils.displayCartSummary(comparisonResults);
+        return comparisonResults; // Return the results so we can use them in main.js
     }
 
     async function compareCartItemPrices(itemElement) {
@@ -15,14 +15,25 @@ var IkeaCartComparison = (function () {
             throw new Error('Local price element not found');
         }
         const localPrice = localPriceElement.textContent.trim();
-        // get quantity
         const quantity = parseInt(itemElement.querySelector('.cart-ingka-quantity-stepper__input').value);
-        // parse localPrice
         const localPriceNum = parseFloat(localPrice.replace(/[^0-9.,]/g, '').replace(',', '.'));
         const localPricePerItem = localPriceNum / quantity;
-        const comparisonResults = await IkeaPriceUtils.fetchComparisonPrices(productId);
-        IkeaDisplayUtils.displayCartItemComparison(localPricePerItem, comparisonResults, itemElement);
-        return { localPricePerItem, comparisonResults };
+        const comparisonResults = await IkeaPriceUtils.fetchForeignPrices(productId);
+
+        const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
+        const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
+        const productName = `${nameElement.textContent.trim()} - ${descriptionElement.textContent.trim()}`;
+
+        const adjustedComparisonResults = comparisonResults.map(result => ({
+            ...result,
+            price: result.price !== null
+                ? (parseFloat(result.price.replace(/[^0-9.,]/g, '').replace(',', '.')) * quantity).toFixed(2)
+                : null,
+            isAvailable: result.price !== null
+        }));
+
+        IkeaDisplayUtils.displayCartItemComparison(localPriceNum, adjustedComparisonResults, itemElement, quantity);
+        return { localPriceNum, adjustedComparisonResults, quantity, productName };
     }
 
     return {

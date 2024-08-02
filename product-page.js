@@ -3,8 +3,12 @@ var IkeaProductPage = (function () {
     async function compareProductPrice(retryCount = 0) {
         try {
             const productData = getProductData();
-            const comparisonResults = await IkeaPriceUtils.fetchComparisonPrices(productData.id);
-            IkeaDisplayUtils.displayProductComparison(productData.price, comparisonResults);
+            const comparisonResults = await IkeaPriceUtils.fetchForeignPrices(productData.id);
+            const adjustedComparisonResults = comparisonResults.map(result => ({
+                ...result,
+                isAvailable: result.price !== null
+            }));
+            IkeaDisplayUtils.displayProductComparison(productData.price, adjustedComparisonResults);
         } catch (error) {
             IkeaDomUtils.handleComparisonError(error, retryCount, compareProductPrice);
         }
