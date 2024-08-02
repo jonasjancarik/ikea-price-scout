@@ -56,11 +56,12 @@ var IkeaDisplayUtils = (function () {
         let optimalPurchaseStrategy = [];
 
         comparisonResults.forEach(item => {
-            totalLocalPrice += item.localPriceNum;
+            const itemTotalLocalPrice = item.localPriceNum * item.quantity;
+            totalLocalPrice += itemTotalLocalPrice;
 
-            let cheapestPrice = item.localPriceNum;
+            let cheapestPrice = itemTotalLocalPrice;
             let cheapestCountry = 'Česko';
-            let cheapestUrl = item.url;  // todo: this is probably undefined
+            let cheapestUrl = item.url;
 
             item.adjustedComparisonResults.forEach(result => {
                 if (!unavailableCounts[result.name]) {
@@ -73,28 +74,30 @@ var IkeaDisplayUtils = (function () {
                 }
 
                 const { convertedPrice } = IkeaPriceUtils.calculatePriceDifference(item.localPriceNum, result);
+                const totalConvertedPrice = convertedPrice * item.quantity;
 
                 if (!totalSavings[result.name]) {
                     totalSavings[result.name] = 0;
                 }
-                if (convertedPrice < item.localPriceNum) {
-                    totalSavings[result.name] += item.localPriceNum - convertedPrice;
+                if (totalConvertedPrice < itemTotalLocalPrice) {
+                    totalSavings[result.name] += itemTotalLocalPrice - totalConvertedPrice;
                 }
 
-                if (convertedPrice < cheapestPrice) {
-                    cheapestPrice = convertedPrice;
+                if (totalConvertedPrice < cheapestPrice) {
+                    cheapestPrice = totalConvertedPrice;
                     cheapestCountry = result.name;
                     cheapestUrl = result.url;
                 }
             });
 
-            optimalSavings += item.localPriceNum - cheapestPrice;
+            optimalSavings += itemTotalLocalPrice - cheapestPrice;
             optimalPurchaseStrategy.push({
                 productName: item.productName,
                 country: cheapestCountry,
                 price: cheapestPrice,
-                saving: item.localPriceNum - cheapestPrice,
+                saving: itemTotalLocalPrice - cheapestPrice,
                 url: cheapestUrl,
+                quantity: item.quantity
             });
         });
 
@@ -128,7 +131,7 @@ var IkeaDisplayUtils = (function () {
             html += `<strong>${country}:</strong><br>`;
             html += `<ul style="margin-left: 1em;">`;
             groupedItems[country].forEach(item => {
-                html += `<li><a href="${item.url}" target="_blank">${item.productName}</a>:<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`
+                html += `<li><a href="${item.url}" target="_blank">${item.productName}</a> (${item.quantity} ks):<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`
                 if (country !== 'Česko') {
                     html += ` <span style="white-space: nowrap; color: green; font-size: 0.8rem;">(-${IkeaPriceUtils.formatPrice(item.saving)})</span>`;
                 }
