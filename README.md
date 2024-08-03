@@ -1,6 +1,8 @@
 # ikea-price-comparison-chrome
 
 ! Prosím berte na vědomí, že jde o rozpracovaný projekt. Rozšíření manuálně nainstalované se nebude samo aktualizovat a může kdykoliv přestat fungovat.
+
+Aktuální verze nejspíš nepřepočítává správně kurz u položek v košíku.
  
 ## Instalace
 
