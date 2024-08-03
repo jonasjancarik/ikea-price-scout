@@ -7,7 +7,7 @@
         "activeTab"
     ],
     "host_permissions": [
-        "https://*.ikea.com/*",
+        "https://*.ikea.com/cz/cs/*",
         "https://www.cnb.cz/*"
     ],
     "background": {
