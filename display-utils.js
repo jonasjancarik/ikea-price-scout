@@ -1,5 +1,55 @@
 // display-utils.js
 var IkeaDisplayUtils = (function () {
+    function updateCartComparisons(comparisonResults) {
+        console.log("Updating cart comparisons");
+        updateCartItemComparisons(comparisonResults);
+        updateCartSummary(comparisonResults);
+    }
+
+    function updateCartItemComparisons(comparisonResults) {
+        console.log("Updating cart item comparisons");
+        const cartItems = document.querySelectorAll('.product_product__pvcUf');
+        console.log("Found", cartItems.length, "cart items");
+        comparisonResults.forEach((result, index) => {
+            const itemElement = cartItems[index];
+            if (itemElement && result) {
+                console.log("Updating comparison for item", index);
+                const comparisonHTML = generateComparisonHTML(result.localPriceNum, result.adjustedComparisonResults, result.quantity);
+                let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+                if (!comparisonDiv) {
+                    console.log("Creating new comparison div for item", index);
+                    comparisonDiv = createComparisonDiv(comparisonHTML, 'font-size: 0.9em;');
+                    comparisonDiv.classList.add('ikea-price-comparison');
+                    IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
+                } else {
+                    console.log("Updating existing comparison div for item", index);
+                    comparisonDiv.innerHTML = comparisonHTML;
+                }
+            } else {
+                console.log("No comparison result or item element for item", index);
+            }
+        });
+    }
+
+    function updateCartSummary(comparisonResults) {
+        console.log("Updating cart summary");
+        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(comparisonResults);
+        const summaryHTML = generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
+
+        let summaryDiv = document.querySelector('#ikea-price-comparison-summary');
+        if (!summaryDiv) {
+            console.log("Creating new summary div");
+            summaryDiv = createSummaryDiv(summaryHTML);
+            summaryDiv.id = 'ikea-price-comparison-summary';
+            IkeaDomUtils.insertAfterElement('.checkoutInformation_checkoutInformation__Xh4rd', summaryDiv);
+        } else {
+            console.log("Updating existing summary div");
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        attachUnavailableItemsListeners(comparisonResults);
+    }
+
     function displayProductComparison(localPrice, comparisonResults) {
         const comparisonHTML = generateComparisonHTML(localPrice, comparisonResults);
         const comparisonDiv = createComparisonDiv(comparisonHTML);
@@ -10,13 +60,6 @@ var IkeaDisplayUtils = (function () {
         const comparisonHTML = generateComparisonHTML(localPrice, comparisonResults, quantity);
         const comparisonDiv = createComparisonDiv(comparisonHTML, 'font-size: 0.9em;');
         IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
-    }
-
-    function displayCartSummary(comparisonResults) {
-        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(comparisonResults);
-        const summaryHTML = generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
-        const summaryDiv = createSummaryDiv(summaryHTML);
-        IkeaDomUtils.insertAfterElement('.checkoutInformation_checkoutInformation__Xh4rd', summaryDiv);
     }
 
     function generateComparisonHTML(localPrice, comparisonResults, quantity = 1) {
@@ -159,7 +202,7 @@ var IkeaDisplayUtils = (function () {
     return {
         displayProductComparison: displayProductComparison,
         displayCartItemComparison: displayCartItemComparison,
-        displayCartSummary: displayCartSummary,
-        attachUnavailableItemsListeners: attachUnavailableItemsListeners
+        attachUnavailableItemsListeners: attachUnavailableItemsListeners,
+        updateCartComparisons: updateCartComparisons
     };
 })();

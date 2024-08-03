@@ -9,14 +9,6 @@ var IkeaCartComparison = (function () {
             quantity: item.quantity,
             productName: item.productName
         }));
-        comparisonResults.forEach((result, index) => {
-            IkeaDisplayUtils.displayCartItemComparison(
-                result.localPriceNum,
-                result.adjustedComparisonResults,
-                cartItems[index],
-                result.quantity
-            );
-        });
         return comparisonResults;
     }
 
