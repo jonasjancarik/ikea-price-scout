@@ -39,7 +39,7 @@ var IkeaPriceUtils = (function () {
         if (!result.isAvailable) {
             return { convertedPrice: null, percentageDiff: null };
         }
-        const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace('.', '').replace(',', '.'));
+        const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace(',', '.'));  // we can't just .replace('.', '') because it will mess up the price in repeat calculations (?) needs investigation
         let exchangeRate = IkeaExchangeRates.getRates()[result.currencyCode] || 1;
         const convertedPrice = comparisonPriceNum * exchangeRate;
         const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(1);
