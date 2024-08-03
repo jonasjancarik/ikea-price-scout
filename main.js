@@ -91,7 +91,7 @@
             if (storedComparison) {
                 let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
                 if (!comparisonDiv) {
-                    itemElement.insertAdjacentHTML('beforeend', storedComparison);
+                    itemElement.insertAdjacentHTML('beforeend', storedComparison);  // TODO: this should do something like IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', storedComparison, itemElement); because otherwise the comparison div is in a different place (below the row) - on the other hand that looks ok in the mobile view. But calling that results in TypeError: Failed to execute 'insertBefore' on 'Node': parameter 1 is not of type 'Node'.
                 }
             }
         });
