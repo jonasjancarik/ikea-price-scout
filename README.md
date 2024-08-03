@@ -2,7 +2,9 @@
 
 ! Prosím berte na vědomí, že jde o rozpracovaný projekt. Rozšíření manuálně nainstalované se nebude samo aktualizovat a může kdykoliv přestat fungovat.
 
-Aktuální verze nejspíš nepřepočítává správně kurz u položek v košíku.
+## Známé chyby
+
+Aktuální verze nepřepočítává správně kurz pokud cena v Německu a Rakousku přesahuje 1 000 EUR.
  
 ## Instalace
 
