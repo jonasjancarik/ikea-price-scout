@@ -62,10 +62,10 @@
         const cartItems = document.querySelectorAll('.product_product__pvcUf');
         console.log("Found", cartItems.length, "cart items");
         const state = Array.from(cartItems).map(item => {
-            const id = item.getAttribute('data-product-id');
+            const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid').split('_').pop() : '';
             const quantityInput = item.querySelector('.cart-ingka-quantity-stepper__input');
             const quantity = quantityInput ? quantityInput.value : '1';
-            console.log("Cart item:", id, "Quantity:", quantity);
+            console.log("Cart item:", id, "Quantity:", quantity); // TODO: id is null
             return `${id}:${quantity}`;
         }).join(',');
         console.log("Cart state:", state);
