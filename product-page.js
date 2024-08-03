@@ -1,11 +1,22 @@
+// product-page.js
 var IkeaProductPage = (function () {
     async function compareProductPrice(retryCount = 0) {
         try {
+            await IkeaExchangeRates.getExchangeRates();
             const productData = getProductData();
             const product = new Product(productData.id, productData.price);
             await product.fetchForeignPrices();
             const comparisonData = product.getComparisonData();
-            IkeaDisplayUtils.displayProductComparison(product.localPrice, comparisonData);
+
+            // Apply currency conversion to comparison data
+            const adjustedComparisonData = comparisonData.map(result => ({
+                ...result,
+                priceDiff: result.isAvailable ?
+                    IkeaPriceUtils.calculatePriceDifference(product.localPrice, result) :
+                    { convertedPrice: null, percentageDiff: null }
+            }));
+
+            IkeaDisplayUtils.displayProductComparison(product.localPrice, adjustedComparisonData);
         } catch (error) {
             IkeaDomUtils.handleComparisonError(error, retryCount, compareProductPrice);
         }
@@ -19,9 +30,10 @@ var IkeaProductPage = (function () {
         if (!localPriceElement) {
             throw new Error('Local price element not found');
         }
+        const localPrice = parseFloat(localPriceElement.textContent.trim().replace(/[^0-9.,]/g, '').replace(',', '.'));
         return {
             id: productId,
-            price: parseInt(localPriceElement.textContent.trim().replace(' ', ''))
+            price: localPrice
         };
     }
 
