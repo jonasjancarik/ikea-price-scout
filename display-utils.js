@@ -31,23 +31,38 @@ var IkeaDisplayUtils = (function () {
         });
     }
 
+    function insertSummaryDiv(summaryHTML) {
+        console.log("Inserting summary div");
+        let summaryDiv = document.getElementById('ikea-price-comparison-summary');
+        if (!summaryDiv) {
+            summaryDiv = document.createElement('div');
+            summaryDiv.id = 'ikea-price-comparison-summary';
+            summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+        }
+        summaryDiv.innerHTML = summaryHTML;
+
+        const insertAttempt = () => {
+            const targetSelector = '.checkoutInformation_checkoutInformation__Xh4rd';
+            const targetElement = document.querySelector(targetSelector);
+            if (targetElement) {
+                console.log("Target element found, inserting summary div");
+                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+            } else {
+                console.log("Target element for summary not found, retrying in 500ms");
+                setTimeout(insertAttempt, 500);
+            }
+        };
+        insertAttempt();
+    }
+
     function updateCartSummary(comparisonResults) {
         console.log("Updating cart summary");
         const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(comparisonResults);
         const summaryHTML = generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
 
-        let summaryDiv = document.querySelector('#ikea-price-comparison-summary');
-        if (!summaryDiv) {
-            console.log("Creating new summary div");
-            summaryDiv = createSummaryDiv(summaryHTML);
-            summaryDiv.id = 'ikea-price-comparison-summary';
-            IkeaDomUtils.insertAfterElement('.checkoutInformation_checkoutInformation__Xh4rd', summaryDiv);
-        } else {
-            console.log("Updating existing summary div");
-            summaryDiv.innerHTML = summaryHTML;
-        }
+        insertSummaryDiv(summaryHTML);
 
-        attachUnavailableItemsListeners(comparisonResults);
+        return summaryHTML; // Return the HTML for storage in main.js
     }
 
     function displayProductComparison(localPrice, comparisonResults) {
@@ -80,13 +95,6 @@ var IkeaDisplayUtils = (function () {
     function createComparisonDiv(html, additionalStyles = '') {
         const div = document.createElement('div');
         div.style.cssText = `background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px; ${additionalStyles}`;
-        div.innerHTML = html;
-        return div;
-    }
-
-    function createSummaryDiv(html) {
-        const div = document.createElement('div');
-        div.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
         div.innerHTML = html;
         return div;
     }
@@ -203,6 +211,10 @@ var IkeaDisplayUtils = (function () {
         displayProductComparison: displayProductComparison,
         displayCartItemComparison: displayCartItemComparison,
         attachUnavailableItemsListeners: attachUnavailableItemsListeners,
-        updateCartComparisons: updateCartComparisons
+        updateCartComparisons: updateCartComparisons,
+        generateComparisonHTML: generateComparisonHTML,
+        createComparisonDiv: createComparisonDiv,
+        insertSummaryDiv: insertSummaryDiv,
+        updateCartSummary: updateCartSummary,
     };
 })();

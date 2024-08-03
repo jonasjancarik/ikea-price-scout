@@ -3,6 +3,7 @@
     let cartObserver;
     let resizeObserver;
     let lastCartState = '';
+    let storedComparisons = new Map(); // Store our added elements
 
     function initializeExtension() {
         console.log("Initializing extension");
@@ -48,13 +49,60 @@
             try {
                 const comparisonResults = await IkeaCartComparison.compareCartPrices();
                 console.log("Comparison results:", comparisonResults);
-                IkeaDisplayUtils.updateCartComparisons(comparisonResults);
+                updateCartComparisons(comparisonResults);
                 lastCartState = currentCartState;
             } catch (error) {
                 console.error("Error in compareCartPrices:", error);
             }
         } else {
-            console.log("Cart state unchanged, skipping update");
+            console.log("Cart state unchanged, reapplying stored comparisons");
+            reapplyStoredComparisons();
+        }
+    }
+
+    function updateCartComparisons(comparisonResults) {
+        const cartItems = document.querySelectorAll('.product_product__pvcUf');
+        comparisonResults.forEach((result, index) => {
+            const itemElement = cartItems[index];
+            if (itemElement && result) {
+                const productId = itemElement.getAttribute('data-product-id');
+                const comparisonHTML = IkeaDisplayUtils.generateComparisonHTML(result.localPriceNum, result.adjustedComparisonResults, result.quantity);
+                let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+                if (!comparisonDiv) {
+                    comparisonDiv = IkeaDisplayUtils.createComparisonDiv(comparisonHTML);
+                    comparisonDiv.classList.add('ikea-price-comparison');
+                    IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
+                } else {
+                    comparisonDiv.innerHTML = comparisonHTML;
+                }
+                storedComparisons.set(productId, comparisonDiv.outerHTML);
+            }
+        });
+
+        const summaryHTML = IkeaDisplayUtils.updateCartSummary(comparisonResults);
+        storedComparisons.set('cartSummary', summaryHTML);
+    }
+
+    function reapplyStoredComparisons() {
+        const cartItems = document.querySelectorAll('.product_product__pvcUf');
+        cartItems.forEach(itemElement => {
+            const productId = itemElement.getAttribute('data-product-id');
+            const storedComparison = storedComparisons.get(productId);
+            if (storedComparison) {
+                let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+                if (!comparisonDiv) {
+                    itemElement.insertAdjacentHTML('beforeend', storedComparison);
+                }
+            }
+        });
+
+        // Reapply cart summary
+        const storedSummary = storedComparisons.get('cartSummary');
+        if (storedSummary) {
+            let summaryDiv = document.getElementById('ikea-price-comparison-summary');
+            if (!summaryDiv) {
+                IkeaDisplayUtils.insertSummaryDiv(storedSummary);
+            }
         }
     }
 
@@ -74,7 +122,7 @@
 
     function setupCartObserver() {
         console.log("Setting up cart observer");
-        const cartObserver = new MutationObserver(debounce(() => {
+        cartObserver = new MutationObserver(debounce(() => {
             console.log("Cart mutation observed");
             compareCartPrices();
         }, 500));
@@ -107,9 +155,10 @@
 
         // Add resize observer to handle layout changes
         resizeObserver = new ResizeObserver(debounce(() => {
-            console.log("Window resized, reattaching cart observer");
+            console.log("Window resized, reattaching cart observer and reapplying comparisons");
             cartObserver.disconnect();
             attemptAttachment();
+            reapplyStoredComparisons();
         }, 500));
 
         resizeObserver.observe(document.body);
@@ -156,6 +205,7 @@
             console.log("URL changed, calling initializeExtension");
             if (cartObserver) cartObserver.disconnect();
             if (resizeObserver) resizeObserver.disconnect();
+            storedComparisons.clear(); // Clear stored comparisons on URL change
             initializeExtension();
         }
     }).observe(document, { subtree: true, childList: true });
