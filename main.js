@@ -7,6 +7,30 @@
 
     function initializeExtension() {
         console.log("Initializing extension");
+        if (isProductPage()) {
+            initializeProductPage();
+        } else if (isCartPage()) {
+            initializeCartPage();
+        } else {
+            console.log("Not a product or cart page");
+        }
+    }
+
+    function isProductPage() {
+        return window.location.pathname.includes('/p/');
+    }
+
+    function isCartPage() {
+        return window.location.pathname.includes('/shoppingcart/');
+    }
+
+    function initializeProductPage() {
+        console.log("Initializing product page functionality");
+        IkeaProductPage.compareProductPrice();
+    }
+
+    function initializeCartPage() {
+        console.log("Initializing cart page functionality");
         setupOneCheckoutObserver();
     }
 
@@ -91,7 +115,7 @@
             if (storedComparison) {
                 let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
                 if (!comparisonDiv) {
-                    itemElement.insertAdjacentHTML('beforeend', storedComparison);  // TODO: this should do something like IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', storedComparison, itemElement); because otherwise the comparison div is in a different place (below the row) - on the other hand that looks ok in the mobile view. But calling that results in TypeError: Failed to execute 'insertBefore' on 'Node': parameter 1 is not of type 'Node'.
+                    itemElement.insertAdjacentHTML('beforeend', storedComparison);
                 }
             }
         });
@@ -113,7 +137,7 @@
             const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid').split('_').pop() : '';
             const quantityInput = item.querySelector('.cart-ingka-quantity-stepper__input');
             const quantity = quantityInput ? quantityInput.value : '1';
-            console.log("Cart item:", id, "Quantity:", quantity); // TODO: id is null
+            console.log("Cart item:", id, "Quantity:", quantity);
             return `${id}:${quantity}`;
         }).join(',');
         console.log("Cart state:", state);
