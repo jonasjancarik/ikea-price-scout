@@ -14,7 +14,7 @@ var IkeaDisplayUtils = (function () {
             const itemElement = cartItems[index];
             if (itemElement && result) {
                 console.log("Updating comparison for item", index);
-                const comparisonHTML = generateComparisonHTML(result.localPriceNum, result.adjustedComparisonResults, result.quantity);
+                const comparisonHTML = generateComparisonHTML(result);
                 let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
                 if (!comparisonDiv) {
                     console.log("Creating new comparison div for item", index);
@@ -55,36 +55,29 @@ var IkeaDisplayUtils = (function () {
         insertAttempt();
     }
 
-    function updateCartSummary(comparisonResults) {
+    function updateCartSummary(cartItems) {
         console.log("Updating cart summary");
-        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(comparisonResults);
+        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(cartItems);
         const summaryHTML = generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
 
         insertSummaryDiv(summaryHTML);
 
-        return summaryHTML; // Return the HTML for storage in main.js
+        return summaryHTML;
     }
 
-    function displayProductComparison(localPrice, comparisonResults) {
-        const comparisonHTML = generateComparisonHTML(localPrice, comparisonResults);
+    function displayProductComparison(product) {
+        const comparisonHTML = generateComparisonHTML(product);
         const comparisonDiv = createComparisonDiv(comparisonHTML);
         IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
     }
 
-    function displayCartItemComparison(localPrice, comparisonResults, itemElement, quantity) {
-        const comparisonHTML = generateComparisonHTML(localPrice, comparisonResults, quantity);
-        const comparisonDiv = createComparisonDiv(comparisonHTML, 'font-size: 0.9em;');
-        IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
-    }
-
-    function generateComparisonHTML(localPrice, comparisonResults, quantity = 1) {
-        let html = quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${quantity} ks v jiných zemích:</strong><br><br>`;
-        comparisonResults.forEach(result => {
+    function generateComparisonHTML(cartItem) {
+        let html = cartItem.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${cartItem.quantity} ks v jiných zemích:</strong><br><br>`;
+        cartItem.otherCountries.forEach(result => {
             if (result.isAvailable) {
-                const { convertedPrice, percentageDiff } = IkeaPriceUtils.calculatePriceDifference(localPrice, result);
-                const formattedPrice = IkeaPriceUtils.formatPrice(convertedPrice);
-                const color = percentageDiff > 0 ? 'red' : 'green';
-                html += `<a href="${result.url}" target="_blank" style="color: inherit; text-decoration: none;">${result.name}</a>: <span style="color: ${color};">${formattedPrice} (${percentageDiff > 0 ? '+' : ''}${percentageDiff}%)</span><br>`;
+                const formattedPrice = IkeaPriceUtils.formatPrice(result.totalPrice);
+                const color = result.priceDiff.percentageDiff > 0 ? 'red' : 'green';
+                html += `<a href="${result.url}" target="_blank" style="color: inherit; text-decoration: none;">${result.name}</a>: <span style="color: ${color};">${formattedPrice} (${result.priceDiff.percentageDiff > 0 ? '+' : ''}${result.priceDiff.percentageDiff} %)</span><br>`;
             } else {
                 html += `<span style="color: gray;">${result.name}: Nedostupné</span><br>`;
             }
@@ -99,22 +92,21 @@ var IkeaDisplayUtils = (function () {
         return div;
     }
 
-    function calculateSavings(comparisonResults) {
+    function calculateSavings(cartItems) {
         let totalLocalPrice = 0;
         let totalSavings = {};
         let optimalSavings = 0;
         let unavailableCounts = {};
         let optimalPurchaseStrategy = [];
 
-        comparisonResults.forEach(item => {
-            const itemTotalLocalPrice = item.localPriceNum * item.quantity;
-            totalLocalPrice += itemTotalLocalPrice;
+        cartItems.forEach(item => {
+            totalLocalPrice += item.localPriceForQuantity;
 
-            let cheapestPrice = itemTotalLocalPrice;
+            let cheapestPrice = item.localPriceForQuantity;
             let cheapestCountry = 'Česko';
             let cheapestUrl = item.url;
 
-            item.adjustedComparisonResults.forEach(result => {
+            item.otherCountries.forEach(result => {
                 if (!unavailableCounts[result.name]) {
                     unavailableCounts[result.name] = 0;
                 }
@@ -124,29 +116,26 @@ var IkeaDisplayUtils = (function () {
                     return;
                 }
 
-                const { convertedPrice } = IkeaPriceUtils.calculatePriceDifference(item.localPriceNum, result);
-                const totalConvertedPrice = convertedPrice * item.quantity;
-
                 if (!totalSavings[result.name]) {
                     totalSavings[result.name] = 0;
                 }
-                if (totalConvertedPrice < itemTotalLocalPrice) {
-                    totalSavings[result.name] += itemTotalLocalPrice - totalConvertedPrice;
+                if (result.totalPrice < item.localPriceForQuantity) {
+                    totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
                 }
 
-                if (totalConvertedPrice < cheapestPrice) {
-                    cheapestPrice = totalConvertedPrice;
+                if (result.totalPrice < cheapestPrice) {
+                    cheapestPrice = result.totalPrice;
                     cheapestCountry = result.name;
                     cheapestUrl = result.url;
                 }
             });
 
-            optimalSavings += itemTotalLocalPrice - cheapestPrice;
+            optimalSavings += item.localPriceForQuantity - cheapestPrice;
             optimalPurchaseStrategy.push({
                 productName: item.productName,
                 country: cheapestCountry,
                 price: cheapestPrice,
-                saving: itemTotalLocalPrice - cheapestPrice,
+                saving: item.localPriceForQuantity - cheapestPrice,
                 url: cheapestUrl,
                 quantity: item.quantity
             });
@@ -186,8 +175,8 @@ var IkeaDisplayUtils = (function () {
                 if (country !== 'Česko') {
                     html += ` <span style="white-space: nowrap; color: green; font-size: 0.8rem;">(-${IkeaPriceUtils.formatPrice(item.saving)})</span>`;
                 }
+                html += '</li>';
             });
-            html += '';
             html += `</ul><br>`;
         }
 
@@ -200,7 +189,7 @@ var IkeaDisplayUtils = (function () {
                 e.preventDefault();
                 const country = e.target.getAttribute('data-country');
                 const unavailableItems = comparisonResults
-                    .filter(item => item.adjustedComparisonResults.find(result => result.name === country && !result.isAvailable))
+                    .filter(item => item.otherCountries.find(result => result.name === country && !result.isAvailable))
                     .map(item => item.productName);
                 alert(`Nedostupné položky v ${country}:\n\n${unavailableItems.join('\n')}`);
             });
@@ -209,12 +198,11 @@ var IkeaDisplayUtils = (function () {
 
     return {
         displayProductComparison: displayProductComparison,
-        displayCartItemComparison: displayCartItemComparison,
-        attachUnavailableItemsListeners: attachUnavailableItemsListeners,
         updateCartComparisons: updateCartComparisons,
         generateComparisonHTML: generateComparisonHTML,
         createComparisonDiv: createComparisonDiv,
         insertSummaryDiv: insertSummaryDiv,
         updateCartSummary: updateCartSummary,
+        attachUnavailableItemsListeners: attachUnavailableItemsListeners
     };
 })();

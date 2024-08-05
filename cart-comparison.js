@@ -1,15 +1,16 @@
 var IkeaCartComparison = (function () {
     async function compareCartPrices() {
-        const cartItems = document.querySelectorAll('.product_product__pvcUf');
-        const cartItemObjects = Array.from(cartItems).map(createCartItem);
+        const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+        const cartItemObjects = await Promise.all(Array.from(cartItemElements).map(createCartItem));
         await Promise.all(cartItemObjects.map(item => item.fetchForeignPrices()));
-        const comparisonResults = cartItemObjects.map(item => ({
-            localPriceNum: item.localPrice * item.quantity,
-            adjustedComparisonResults: item.getComparisonData(),
+        const cartItems = cartItemObjects.map(item => ({
+            localPriceForQuantity: item.localPrice * item.quantity,
+            otherCountries: item.getComparisonData(),  // this will have amounts multiplied by quantity
             quantity: item.quantity,
-            productName: item.productName
+            productName: item.productName,
+            product: item.product
         }));
-        return comparisonResults;
+        return cartItems;
     }
 
     function createCartItem(itemElement) {

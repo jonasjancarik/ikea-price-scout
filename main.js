@@ -3,10 +3,12 @@
     let cartObserver;
     let resizeObserver;
     let lastCartState = '';
-    let storedComparisons = new Map(); // Store our added elements
+    let storedComparisons = new Map();
+    let cart;
 
-    function initializeExtension() {
+    async function initializeExtension() {
         console.log("Initializing extension");
+        await IkeaExchangeRates.getExchangeRates();
         if (isProductPage()) {
             initializeProductPage();
         } else if (isCartPage()) {
@@ -31,34 +33,32 @@
 
     function initializeCartPage() {
         console.log("Initializing cart page functionality");
-        setupOneCheckoutObserver();
+        setupCartObserver();
     }
 
-    function setupOneCheckoutObserver() {
-        const oneCheckoutObserver = new MutationObserver((mutations) => {
+    function setupCartObserver() {
+        const cartObserver = new MutationObserver((mutations) => {
             for (let mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                     console.log("#one-checkout changed, initializing cart functionality");
                     initializeCartFunctionality();
-                    oneCheckoutObserver.disconnect(); // Stop observing once initialized
+                    cartObserver.disconnect();
                     break;
                 }
             }
         });
 
-        const oneCheckoutElement = document.getElementById('one-checkout');
-        if (oneCheckoutElement) {
-            oneCheckoutObserver.observe(oneCheckoutElement, { childList: true, subtree: true });
+        const cartElement = document.getElementById('one-checkout');
+        if (cartElement) {
+            cartObserver.observe(cartElement, { childList: true, subtree: true });
         } else {
             console.log("#one-checkout not found, retrying in 1000ms");
-            setTimeout(setupOneCheckoutObserver, 1000);
+            setTimeout(setupCartObserver, 1000);
         }
     }
 
     async function initializeCartFunctionality() {
         console.log("Initializing cart functionality");
-        await IkeaExchangeRates.getExchangeRates();
-        console.log("Exchange rates fetched");
         await compareCartPrices();
         setupCartObserver();
     }
@@ -71,9 +71,22 @@
         if (currentCartState !== lastCartState || lastCartState === '') {
             console.log("Cart state changed or initial load, updating comparisons");
             try {
-                const comparisonResults = await IkeaCartComparison.compareCartPrices();
-                console.log("Comparison results:", comparisonResults);
-                updateCartComparisons(comparisonResults);
+                cart = new Cart();
+                const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+                for (const itemElement of cartItemElements) {
+                    // I'd like to be able to use const productId = itemElement.getAttribute('data-product-id'); but that ID doesn't work for constructing the URL, it's missing e.g. the s prefix, which is there sometimes but not always - investigate
+                    const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop();
+                    const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
+                    const localPrice = parseFloat(localPriceElement.textContent.trim().replace(/[^0-9.,]/g, '').replace(',', '.'));
+                    const quantity = parseInt(itemElement.querySelector('.cart-ingka-quantity-stepper__input').value);
+                    const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
+                    const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
+                    const productName = `${nameElement.textContent.trim()} - ${descriptionElement.textContent.trim()}`;
+
+                    await cart.addItem(productName, productId, localPrice / quantity, quantity);
+                }
+                const cartItems = cart.getComparisonData();
+                updateCartComparisons(cartItems);
                 lastCartState = currentCartState;
             } catch (error) {
                 console.error("Error in compareCartPrices:", error);
@@ -84,13 +97,13 @@
         }
     }
 
-    function updateCartComparisons(comparisonResults) {
-        const cartItems = document.querySelectorAll('.product_product__pvcUf');
-        comparisonResults.forEach((result, index) => {
-            const itemElement = cartItems[index];
-            if (itemElement && result) {
-                const productId = itemElement.getAttribute('data-product-id');
-                const comparisonHTML = IkeaDisplayUtils.generateComparisonHTML(result.localPriceNum, result.adjustedComparisonResults, result.quantity);
+    function updateCartComparisons(cartItems) {
+        const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+        cartItemElements.forEach((itemElement) => {
+            const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop();
+            const cartItem = cartItems.find(item => item.id === productId);
+            if (cartItem) {
+                const comparisonHTML = IkeaDisplayUtils.generateComparisonHTML(cartItem);
                 let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
                 if (!comparisonDiv) {
                     comparisonDiv = IkeaDisplayUtils.createComparisonDiv(comparisonHTML);
@@ -103,7 +116,7 @@
             }
         });
 
-        const summaryHTML = IkeaDisplayUtils.updateCartSummary(comparisonResults);
+        const summaryHTML = IkeaDisplayUtils.updateCartSummary(cartItems);
         storedComparisons.set('cartSummary', summaryHTML);
     }
 
@@ -120,7 +133,6 @@
             }
         });
 
-        // Reapply cart summary
         const storedSummary = storedComparisons.get('cartSummary');
         if (storedSummary) {
             let summaryDiv = document.getElementById('ikea-price-comparison-summary');
@@ -177,7 +189,6 @@
 
         attemptAttachment();
 
-        // Add resize observer to handle layout changes
         resizeObserver = new ResizeObserver(debounce(() => {
             console.log("Window resized, reattaching cart observer and reapplying comparisons");
             cartObserver.disconnect();
@@ -190,23 +201,26 @@
 
     function attachCartEventListeners() {
         console.log("Attaching cart event listeners");
-        // Listen for quantity changes
         document.querySelectorAll('.cart-ingka-quantity-stepper__input').forEach(input => {
-            input.addEventListener('change', debounce(compareCartPrices, 500));
+            input.addEventListener('change', debounce((event) => {
+                const productId = event.target.closest('.product_product__pvcUf').getAttribute('data-product-id');
+                const newQuantity = parseInt(event.target.value);
+                cart.updateItemQuantity(productId, newQuantity);
+                compareCartPrices();
+            }, 500));
         });
 
-        // Listen for remove item actions
         document.querySelectorAll('.cart-ingka-product-actions__button').forEach(button => {
             if (button.textContent.trim().toLowerCase() === 'remove') {
-                button.addEventListener('click', () => {
-                    // Wait for the DOM to update before recalculating
+                button.addEventListener('click', (event) => {
+                    const productId = event.target.closest('.product_product__pvcUf').getAttribute('data-product-id');
+                    cart.removeItem(productId);
                     setTimeout(compareCartPrices, 500);
                 });
             }
         });
     }
 
-    // Debounce function to limit how often the comparison is triggered
     function debounce(func, delay) {
         let debounceTimer;
         return function () {
@@ -217,10 +231,8 @@
         }
     }
 
-    // Run main function when the page loads
     window.addEventListener('load', initializeExtension);
 
-    // Also run main function when the URL changes without a full page reload
     let lastUrl = location.href;
     new MutationObserver(() => {
         const url = location.href;
@@ -229,7 +241,7 @@
             console.log("URL changed, calling initializeExtension");
             if (cartObserver) cartObserver.disconnect();
             if (resizeObserver) resizeObserver.disconnect();
-            storedComparisons.clear(); // Clear stored comparisons on URL change
+            storedComparisons.clear();
             initializeExtension();
         }
     }).observe(document, { subtree: true, childList: true });

@@ -1,10 +1,13 @@
 class CartItem {
     constructor(productName, productId, localPrice, quantity) {
-        this.productName = productName;
-        this.productId = productId;
-        this.localPrice = localPrice;
-        this.quantity = quantity;
-        this.product = new Product(productId, localPrice);
+        return (async () => {
+            this.productName = productName;
+            this.productId = productId;
+            this.localPrice = localPrice;
+            this.quantity = quantity;
+            this.product = await new Product(productId, localPrice);
+            return this
+        })();
     }
 
     async fetchForeignPrices() {

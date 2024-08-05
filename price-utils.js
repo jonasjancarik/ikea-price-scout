@@ -1,13 +1,13 @@
 // price-utils.js
 var IkeaPriceUtils = (function () {
     const comparisonCountries = [
-        { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },
+        { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },  // TODO: rename code to countryCode, maybe name to countryName
         { country: 'de', language: 'de', name: 'Německo', currencyCode: 'EUR' },
         { country: 'at', language: 'de', name: 'Rakousko', currencyCode: 'EUR' },
         { country: 'sk', language: 'sk', name: 'Slovensko', currencyCode: 'EUR' },
     ];
 
-    function fetchForeignPrices(productId) {
+    function fetchForeignPrices(productId) {  // TODO: parse strings already in this function
         return Promise.all(comparisonCountries.map(async (comp) => {
             const comparisonUrl = `https://www.ikea.com/${comp.country}/${comp.language}/p/foo-${productId}/`;
             try {
@@ -36,13 +36,17 @@ var IkeaPriceUtils = (function () {
     }
 
     function calculatePriceDifference(localPriceNum, result) {
-        if (!result.isAvailable) {
+        if (!result.isAvailable || result.price === null) {  // ideally isAvailable should be set, but just in case we also check for the price being null directly
             return { convertedPrice: null, percentageDiff: null };
         }
-        const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace(',', '.'));  // we can't just .replace('.', '') because it will mess up the price in repeat calculations (?) needs investigation
+        // check if result price is not a string, if so raise an error
+        if (typeof result.price !== 'string') {
+            throw new Error('Result (other country) price is not a string');
+        }
+        const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace('.', '').replace(',', '.'));
         let exchangeRate = IkeaExchangeRates.getRates()[result.currencyCode] || 1;
         const convertedPrice = comparisonPriceNum * exchangeRate;
-        const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(1);
+        const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0); // todo: toFixed is not a good way to round, use rounding function
         return { convertedPrice, percentageDiff };
     }
 
