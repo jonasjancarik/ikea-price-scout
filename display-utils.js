@@ -1,34 +1,9 @@
 // display-utils.js
 var IkeaDisplayUtils = (function () {
-    function updateCartComparisons(comparisonResults) {
+    function updateCartComparisons() {
         console.log("Updating cart comparisons");
         updateCartItemComparisons(comparisonResults);
         updateCartSummary(comparisonResults);
-    }
-
-    function updateCartItemComparisons(comparisonResults) {
-        console.log("Updating cart item comparisons");
-        const cartItems = document.querySelectorAll('.product_product__pvcUf');
-        console.log("Found", cartItems.length, "cart items");
-        comparisonResults.forEach((result, index) => {
-            const itemElement = cartItems[index];
-            if (itemElement && result) {
-                console.log("Updating comparison for item", index);
-                const comparisonHTML = generateComparisonHTML(result);
-                let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
-                if (!comparisonDiv) {
-                    console.log("Creating new comparison div for item", index);
-                    comparisonDiv = createComparisonDiv(comparisonHTML, 'font-size: 0.9em;');
-                    comparisonDiv.classList.add('ikea-price-comparison');
-                    IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
-                } else {
-                    console.log("Updating existing comparison div for item", index);
-                    comparisonDiv.innerHTML = comparisonHTML;
-                }
-            } else {
-                console.log("No comparison result or item element for item", index);
-            }
-        });
     }
 
     function insertSummaryDiv(summaryHTML) {
@@ -183,19 +158,6 @@ var IkeaDisplayUtils = (function () {
         return html;
     }
 
-    function attachUnavailableItemsListeners(comparisonResults) {
-        document.querySelectorAll('.show-unavailable').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const country = e.target.getAttribute('data-country');
-                const unavailableItems = comparisonResults
-                    .filter(item => item.otherCountries.find(result => result.name === country && !result.isAvailable))
-                    .map(item => item.productName);
-                alert(`Nedostupné položky v ${country}:\n\n${unavailableItems.join('\n')}`);
-            });
-        });
-    }
-
     return {
         displayProductComparison: displayProductComparison,
         updateCartComparisons: updateCartComparisons,
@@ -203,6 +165,5 @@ var IkeaDisplayUtils = (function () {
         createComparisonDiv: createComparisonDiv,
         insertSummaryDiv: insertSummaryDiv,
         updateCartSummary: updateCartSummary,
-        attachUnavailableItemsListeners: attachUnavailableItemsListeners
     };
 })();
