@@ -1,6 +1,11 @@
-// product-page.js
-var IkeaProductPage = (function () {
-    async function compareProductPrice(retryCount = 0) {
+// src/IkeaProductPage.ts
+
+import { ProductItem } from './ProductItem.js';
+import { DisplayUtils } from './DisplayUtils.js';
+import { IkeaDomUtils } from './DomUtils.js';
+
+export const IkeaProductPage = {
+    async compareProductPrice(retryCount = 0) {
         try {
             const productId = window.location.href.replace(/\/$/, '').split('-').pop();
             const localPriceElement = document.querySelector('.pip-temp-price__integer');
@@ -17,13 +22,9 @@ var IkeaProductPage = (function () {
 
             const productItem = await new ProductItem(productName, productId, localPrice, 1);
 
-            IkeaDisplayUtils.displayProductComparison(productItem);
+            DisplayUtils.displayProductComparison(productItem);
         } catch (error) {
-            IkeaDomUtils.handleComparisonError(error, retryCount, compareProductPrice);
+            IkeaDomUtils.handleComparisonError(error, retryCount, this.compareProductPrice);
         }
     }
-
-    return {
-        compareProductPrice: compareProductPrice
-    };
-})();
+};

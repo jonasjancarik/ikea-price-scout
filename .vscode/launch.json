@@ -1,15 +1,18 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "Launch Chrome",
-            // "url": "https://www.ikea.com/cz/cs/p/vimle-5m-rohova-rozkl-pohovka-s-lenoskou-grann-bomstad-cerna-s79477377/",
-            "url": "https://www.ikea.com/cz/cs/shoppingcart/",
-            "runtimeArgs": [
-                "--load-extension=${workspaceFolder}"
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Chrome with Extension",
+      "runtimeArgs": [
+        "--load-extension=${workspaceFolder}/dist",
+        "--start-maximized",
+        "--disable-extensions-except=${workspaceFolder}/dist"
+      ],
+      "url": "https://www.ikea.com/cz/cs/shoppingcart/",
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMaps": true
+    }
+  ]
 }

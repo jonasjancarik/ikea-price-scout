@@ -1,7 +1,12 @@
-// background.js
-let exchangeRates = {};
+// background.ts
 
-async function fetchExchangeRates() {
+interface ExchangeRates {
+    [currencyCode: string]: number;
+}
+
+let exchangeRates: ExchangeRates = {};
+
+async function fetchExchangeRates(): Promise<void> {
     const url = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
     try {
         const response = await fetch(url);

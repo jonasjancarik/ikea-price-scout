@@ -1,12 +1,41 @@
-// display-utils.js
-var IkeaDisplayUtils = (function () {
-    function updateCartComparisons() {
-        console.log("Updating cart comparisons");
-        updateCartItemComparisons(comparisonResults);
-        updateCartSummary(comparisonResults);
-    }
+// IkeaDisplayUtils.ts
 
-    function insertSummaryDiv(summaryHTML) {
+import { IkeaPriceUtils } from './PriceUtils.js';
+import { IkeaDomUtils } from './DomUtils.js';
+import { ProductItem } from './ProductItem.js';
+
+interface CartItem {
+    localPriceForQuantity: number;
+    otherCountries: any[];
+    quantity: number;
+    productName: string;
+    url?: string;
+}
+
+interface SavingsResult {
+    totalSavings: { [country: string]: number };
+    optimalSavings: number;
+    unavailableCounts: { [country: string]: number };
+    optimalPurchaseStrategy: OptimalPurchaseItem[];
+}
+
+interface OptimalPurchaseItem {
+    productName: string;
+    country: string;
+    price: number;
+    saving: number;
+    url: string;
+    quantity: number;
+}
+
+export const DisplayUtils = {
+    updateCartComparisons(comparisonResults: any) {
+        console.log("Updating cart comparisons");
+        this.updateCartItemComparisons(comparisonResults);
+        this.updateCartSummary(comparisonResults);
+    },
+
+    insertSummaryDiv(summaryHTML: string) {
         console.log("Inserting summary div");
         let summaryDiv = document.getElementById('ikea-price-comparison-summary');
         if (!summaryDiv) {
@@ -19,7 +48,7 @@ var IkeaDisplayUtils = (function () {
         const insertAttempt = () => {
             const targetSelector = '.checkoutInformation_checkoutInformation__Xh4rd';
             const targetElement = document.querySelector(targetSelector);
-            if (targetElement) {
+            if (targetElement && targetElement.parentNode) {
                 console.log("Target element found, inserting summary div");
                 targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
             } else {
@@ -28,27 +57,27 @@ var IkeaDisplayUtils = (function () {
             }
         };
         insertAttempt();
-    }
+    },
 
-    function updateCartSummary(cartItems) {
+    updateCartSummary(cartItems: CartItem[]): string {
         console.log("Updating cart summary");
-        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(cartItems);
-        const summaryHTML = generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
+        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
+        const summaryHTML = this.generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
 
-        insertSummaryDiv(summaryHTML);
+        this.insertSummaryDiv(summaryHTML);
 
         return summaryHTML;
-    }
+    },
 
-    function displayProductComparison(product) {
-        const comparisonHTML = generateComparisonHTML(product);
-        const comparisonDiv = createComparisonDiv(comparisonHTML);
+    displayProductComparison(product: ProductItem) {
+        const comparisonHTML = this.generateComparisonHTML(product);
+        const comparisonDiv = this.createComparisonDiv(comparisonHTML);
         IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
-    }
+    },
 
-    function generateComparisonHTML(cartItem) {
+    generateComparisonHTML(cartItem: CartItem): string {
         let html = cartItem.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${cartItem.quantity} ks v jiných zemích:</strong><br><br>`;
-        cartItem.otherCountries.forEach(result => {
+        cartItem.otherCountries.forEach((result: any) => {
             if (result.isAvailable) {
                 const formattedPrice = IkeaPriceUtils.formatPrice(result.totalPrice);
                 const color = result.priceDiff.percentageDiff > 0 ? 'red' : 'green';
@@ -58,30 +87,30 @@ var IkeaDisplayUtils = (function () {
             }
         });
         return html;
-    }
+    },
 
-    function createComparisonDiv(html, additionalStyles = '') {
+    createComparisonDiv(html: string, additionalStyles: string = ''): HTMLDivElement {
         const div = document.createElement('div');
         div.style.cssText = `background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px; ${additionalStyles}`;
         div.innerHTML = html;
         return div;
-    }
+    },
 
-    function calculateSavings(cartItems) {
+    calculateSavings(cartItems: CartItem[]): SavingsResult {
         let totalLocalPrice = 0;
-        let totalSavings = {};
+        let totalSavings: { [country: string]: number } = {};
         let optimalSavings = 0;
-        let unavailableCounts = {};
-        let optimalPurchaseStrategy = [];
+        let unavailableCounts: { [country: string]: number } = {};
+        let optimalPurchaseStrategy: OptimalPurchaseItem[] = [];
 
         cartItems.forEach(item => {
             totalLocalPrice += item.localPriceForQuantity;
 
             let cheapestPrice = item.localPriceForQuantity;
             let cheapestCountry = 'Česko';
-            let cheapestUrl = item.url;
+            let cheapestUrl = item.url ?? '';
 
-            item.otherCountries.forEach(result => {
+            item.otherCountries.forEach((result: any) => {
                 if (!unavailableCounts[result.name]) {
                     unavailableCounts[result.name] = 0;
                 }
@@ -117,9 +146,9 @@ var IkeaDisplayUtils = (function () {
         });
 
         return { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
-    }
+    },
 
-    function generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy) {
+    generateSummaryHTML(totalSavings: { [country: string]: number }, optimalSavings: number, unavailableCounts: { [country: string]: number }, optimalPurchaseStrategy: OptimalPurchaseItem[]): string {
         let html = '<h3 style="font-size: 1.35rem;">Shrnutí úspor:</h3><br>';
         html += '<strong style="font-size: 1.2rem;">Celý nákup v jedné zemi:</strong><br><br>';
 
@@ -134,7 +163,7 @@ var IkeaDisplayUtils = (function () {
         }
         html += `<br><strong>Maximální úspora:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span>`;
         html += '<br><br><strong style="font-size: 1.2rem;">Optimální strategie nákupu:</strong><br><br>';
-        const groupedItems = {};
+        const groupedItems: { [country: string]: OptimalPurchaseItem[] } = {};
         optimalPurchaseStrategy.forEach(item => {
             if (!groupedItems[item.country]) {
                 groupedItems[item.country] = [];
@@ -157,13 +186,4 @@ var IkeaDisplayUtils = (function () {
 
         return html;
     }
-
-    return {
-        displayProductComparison: displayProductComparison,
-        updateCartComparisons: updateCartComparisons,
-        generateComparisonHTML: generateComparisonHTML,
-        createComparisonDiv: createComparisonDiv,
-        insertSummaryDiv: insertSummaryDiv,
-        updateCartSummary: updateCartSummary,
-    };
-})();
+};

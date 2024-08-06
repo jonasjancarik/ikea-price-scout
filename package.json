@@ -1,0 +1,24 @@
+{
+  "name": "ikea-price-comparison-chrome",
+  "version": "1.0.0",
+  "description": "! Prosím berte na vědomí, že jde o rozpracovaný projekt. Rozšíření manuálně nainstalované se nebude samo aktualizovat a může kdykoliv přestat fungovat.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rimraf dist && tsc; npm run copy",
+    "copy": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
+    "start": "http-server ./dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "@typescript-eslint/parser": "^8.0.1",
+    "cpx": "^1.5.0",
+    "eslint": "^9.8.0",
+    "http-server": "^14.1.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.5.4"
+  }
+}

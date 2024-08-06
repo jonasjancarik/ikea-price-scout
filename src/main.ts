@@ -1,14 +1,42 @@
-// main.js
-(function () {
-    let cartObserver;
-    let resizeObserver;
-    let lastCartState = '';
-    let storedComparisons = new Map();
-    let cart;
+interface ModuleUrls {
+    main: string;
+    ProductPage: string;
+    Cart: string;
+    ExchangeRates: string;
+    DisplayUtils: string;
+    DomUtils: string;
+    PriceUtils: string;
+    ProductItem: string;
+}
 
-    async function initializeExtension() {
+export default async function initializeExtension(moduleUrls: ModuleUrls) {
+    const [
+        { IkeaProductPage },
+        { Cart },
+        { ExchangeRates },
+        { DisplayUtils },
+        { IkeaDomUtils },
+        { IkeaPriceUtils },
+        { ProductItem }
+    ] = await Promise.all([
+        import(moduleUrls.ProductPage),
+        import(moduleUrls.Cart),
+        import(moduleUrls.ExchangeRates),
+        import(moduleUrls.DisplayUtils),
+        import(moduleUrls.DomUtils),
+        import(moduleUrls.PriceUtils),
+        import(moduleUrls.ProductItem)
+    ]);
+
+    let cartObserver: MutationObserver | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let lastCartState = '';
+    let storedComparisons = new Map<string, string>();
+    let cart: Cart | null = null;
+
+    async function initializeExtension(): Promise<void> {
         console.log("Initializing extension");
-        await IkeaExchangeRates.getExchangeRates();
+        await ExchangeRates.getExchangeRates();
         if (isProductPage()) {
             initializeProductPage();
         } else if (isCartPage()) {
@@ -18,52 +46,31 @@
         }
     }
 
-    function isProductPage() {
+    function isProductPage(): boolean {
         return window.location.pathname.includes('/p/');
     }
 
-    function isCartPage() {
+    function isCartPage(): boolean {
         return window.location.pathname.includes('/shoppingcart/');
     }
 
-    function initializeProductPage() {
+    function initializeProductPage(): void {
         console.log("Initializing product page functionality");
         IkeaProductPage.compareProductPrice();
     }
 
-    function initializeCartPage() {
+    function initializeCartPage(): void {
         console.log("Initializing cart page functionality");
         setupCartObserver();
     }
 
-    function setupCartObserver() {
-        const cartObserver = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    console.log("#one-checkout changed, initializing cart functionality");
-                    initializeCartFunctionality();
-                    cartObserver.disconnect();
-                    break;
-                }
-            }
-        });
-
-        const cartElement = document.getElementById('one-checkout');
-        if (cartElement) {
-            cartObserver.observe(cartElement, { childList: true, subtree: true });
-        } else {
-            console.log("#one-checkout not found, retrying in 1000ms");
-            setTimeout(setupCartObserver, 1000);
-        }
-    }
-
-    async function initializeCartFunctionality() {
+    async function initializeCartFunctionality(): Promise<void> {
         console.log("Initializing cart functionality");
         await compareCartPrices();
         setupCartObserver();
     }
 
-    async function compareCartPrices() {
+    async function compareCartPrices(): Promise<void> {
         console.log("compareCartPrices function called");
         const currentCartState = getCartState();
         console.log("Current cart state:", currentCartState);
@@ -74,14 +81,17 @@
                 cart = new Cart();
                 const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
                 for (const itemElement of cartItemElements) {
-                    // I'd like to be able to use const productId = itemElement.getAttribute('data-product-id'); but that ID doesn't work for constructing the URL, it's missing e.g. the s prefix, which is there sometimes but not always - investigate
-                    const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop();
+                    const productId = (itemElement.querySelector('.cart-ingka-link') as HTMLAnchorElement).href.split('-').pop() || '';
                     const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
-                    const localPrice = parseFloat(localPriceElement.textContent.trim().replace(/[^0-9.,]/g, '').replace(',', '.'));
-                    const quantity = parseInt(itemElement.querySelector('.cart-ingka-quantity-stepper__input').value);
+                    if (!localPriceElement) {
+                        throw new Error('Local price element not found');
+                    }
+                    const localPrice = parseFloat(localPriceElement.textContent?.trim().replace(/[^0-9.,]/g, '').replace(',', '.') || '0');
+                    const quantityInput = itemElement.querySelector('.cart-ingka-quantity-stepper__input') as HTMLInputElement;
+                    const quantity = parseInt(quantityInput.value);
                     const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
                     const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
-                    const productName = `${nameElement.textContent.trim()} - ${descriptionElement.textContent.trim()}`;
+                    const productName = `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
 
                     await cart.addItem(productName, productId, localPrice / quantity, quantity);
                 }
@@ -97,18 +107,18 @@
         }
     }
 
-    function updateCartComparisons(cartItems) {
+    function updateCartComparisons(cartItems: any[]): void {
         const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
         cartItemElements.forEach((itemElement) => {
-            const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop();
+            const productId = (itemElement.querySelector('.cart-ingka-link') as HTMLAnchorElement).href.split('-').pop() || '';
             const cartItem = cartItems.find(item => item.id === productId);
             if (cartItem) {
-                const comparisonHTML = IkeaDisplayUtils.generateComparisonHTML(cartItem);
+                const comparisonHTML = DisplayUtils.generateComparisonHTML(cartItem);
                 let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
                 if (!comparisonDiv) {
-                    comparisonDiv = IkeaDisplayUtils.createComparisonDiv(comparisonHTML);
+                    comparisonDiv = DisplayUtils.createComparisonDiv(comparisonHTML);
                     comparisonDiv.classList.add('ikea-price-comparison');
-                    IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
+                    IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement as HTMLElement);
                 } else {
                     comparisonDiv.innerHTML = comparisonHTML;
                 }
@@ -116,14 +126,14 @@
             }
         });
 
-        const summaryHTML = IkeaDisplayUtils.updateCartSummary(cartItems);
+        const summaryHTML = DisplayUtils.updateCartSummary(cartItems);
         storedComparisons.set('cartSummary', summaryHTML);
     }
 
-    function reapplyStoredComparisons() {
+    function reapplyStoredComparisons(): void {
         const cartItems = document.querySelectorAll('.product_product__pvcUf');
         cartItems.forEach(itemElement => {
-            const productId = itemElement.getAttribute('data-product-id');
+            const productId = itemElement.getAttribute('data-product-id') || '';
             const storedComparison = storedComparisons.get(productId);
             if (storedComparison) {
                 let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
@@ -137,17 +147,17 @@
         if (storedSummary) {
             let summaryDiv = document.getElementById('ikea-price-comparison-summary');
             if (!summaryDiv) {
-                IkeaDisplayUtils.insertSummaryDiv(storedSummary);
+                DisplayUtils.insertSummaryDiv(storedSummary);
             }
         }
     }
 
-    function getCartState() {
+    function getCartState(): string {
         const cartItems = document.querySelectorAll('.product_product__pvcUf');
         console.log("Found", cartItems.length, "cart items");
         const state = Array.from(cartItems).map(item => {
-            const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid').split('_').pop() : '';
-            const quantityInput = item.querySelector('.cart-ingka-quantity-stepper__input');
+            const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid')?.split('_').pop() : '';
+            const quantityInput = item.querySelector('.cart-ingka-quantity-stepper__input') as HTMLInputElement;
             const quantity = quantityInput ? quantityInput.value : '1';
             console.log("Cart item:", id, "Quantity:", quantity);
             return `${id}:${quantity}`;
@@ -156,20 +166,20 @@
         return state;
     }
 
-    function setupCartObserver() {
+    function setupCartObserver(): void {
         console.log("Setting up cart observer");
         cartObserver = new MutationObserver(debounce(() => {
             console.log("Cart mutation observed");
             compareCartPrices();
         }, 500));
 
-        function attachObserver() {
+        function attachObserver(): boolean {
             const desktopContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V');
             const mobileContainer = document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
             const cartContainer = desktopContainer || mobileContainer;
 
             if (cartContainer) {
-                cartObserver.observe(cartContainer, { childList: true, subtree: true });
+                cartObserver?.observe(cartContainer, { childList: true, subtree: true });
                 console.log("Cart observer attached to", desktopContainer ? "desktop" : "mobile", "container");
                 attachCartEventListeners();
                 return true;
@@ -178,7 +188,7 @@
             return false;
         }
 
-        function attemptAttachment(retries = 0, maxRetries = 10) {
+        function attemptAttachment(retries: number = 0, maxRetries: number = 10): void {
             if (attachObserver()) return;
             if (retries < maxRetries) {
                 setTimeout(() => attemptAttachment(retries + 1), 1000);
@@ -191,7 +201,7 @@
 
         resizeObserver = new ResizeObserver(debounce(() => {
             console.log("Window resized, reattaching cart observer and reapplying comparisons");
-            cartObserver.disconnect();
+            cartObserver?.disconnect();
             attemptAttachment();
             reapplyStoredComparisons();
         }, 500));
@@ -199,35 +209,35 @@
         resizeObserver.observe(document.body);
     }
 
-    function attachCartEventListeners() {
+    function attachCartEventListeners(): void {
         console.log("Attaching cart event listeners");
         document.querySelectorAll('.cart-ingka-quantity-stepper__input').forEach(input => {
-            input.addEventListener('change', debounce((event) => {
-                const productId = event.target.closest('.product_product__pvcUf').getAttribute('data-product-id');
-                const newQuantity = parseInt(event.target.value);
-                cart.updateItemQuantity(productId, newQuantity);
+            input.addEventListener('change', debounce((event: Event) => {
+                const target = event.target as HTMLInputElement;
+                const productId = target.closest('.product_product__pvcUf')?.getAttribute('data-product-id') || '';
+                const newQuantity = parseInt(target.value);
+                cart?.updateItemQuantity(productId, newQuantity);
                 compareCartPrices();
             }, 500));
         });
 
         document.querySelectorAll('.cart-ingka-product-actions__button').forEach(button => {
-            if (button.textContent.trim().toLowerCase() === 'remove') {
-                button.addEventListener('click', (event) => {
-                    const productId = event.target.closest('.product_product__pvcUf').getAttribute('data-product-id');
-                    cart.removeItem(productId);
+            if (button.textContent?.trim().toLowerCase() === 'remove') {
+                button.addEventListener('click', (event: Event) => {
+                    const target = event.target as HTMLElement;
+                    const productId = target.closest('.product_product__pvcUf')?.getAttribute('data-product-id') || '';
+                    cart?.removeItem(productId);
                     setTimeout(compareCartPrices, 500);
                 });
             }
         });
     }
 
-    function debounce(func, delay) {
-        let debounceTimer;
-        return function () {
-            const context = this;
-            const args = arguments;
+    function debounce<F extends (...args: any[]) => any>(func: F, delay: number): (...args: Parameters<F>) => void {
+        let debounceTimer: ReturnType<typeof setTimeout>;
+        return function (this: any, ...args: Parameters<F>) {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            debounceTimer = setTimeout(() => func.apply(this, args), delay);
         }
     }
 
@@ -239,12 +249,15 @@
         if (url !== lastUrl) {
             lastUrl = url;
             console.log("URL changed, calling initializeExtension");
-            if (cartObserver) cartObserver.disconnect();
-            if (resizeObserver) resizeObserver.disconnect();
+            cartObserver?.disconnect();
+            resizeObserver?.disconnect();
             storedComparisons.clear();
             initializeExtension();
         }
     }).observe(document, { subtree: true, childList: true });
 
     console.log("Script loaded");
-})();
+
+    // Call initializeExtension immediately
+    await initializeExtension();
+}
