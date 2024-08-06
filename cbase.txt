@@ -1,0 +1,910 @@
+
+
+./package.json:
+
+{
+  "name": "ikea-price-comparison-chrome",
+  "version": "1.0.0",
+  "description": "! Prosím berte na vědomí, že jde o rozpracovaný projekt. Rozšíření manuálně nainstalované se nebude samo aktualizovat a může kdykoliv přestat fungovat.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc; npm run copy",
+    "copy": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
+    "start": "http-server ./dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "@typescript-eslint/parser": "^8.0.1",
+    "cpx": "^1.5.0",
+    "eslint": "^9.8.0",
+    "http-server": "^14.1.1",
+    "typescript": "^5.5.4"
+  }
+}
+
+
+
+./.eslintrc.js:
+
+module.exports = {
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "rules": {
+    // Add custom rules here
+  }
+};
+
+
+
+./tsconfig.json:
+
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src"
+  ]
+}
+
+
+
+./src/main.ts:
+
+// main.js
+import IkeaProductPage from './ProductPage';
+
+let cartObserver;
+let resizeObserver;
+let lastCartState = '';
+let storedComparisons = new Map();
+let cart;
+
+async function initializeExtension() {
+    console.log("Initializing extension");
+    await IkeaExchangeRates.getExchangeRates();
+    if (isProductPage()) {
+        initializeProductPage();
+    } else if (isCartPage()) {
+        initializeCartPage();
+    } else {
+        console.log("Not a product or cart page");
+    }
+}
+
+function isProductPage() {
+    return window.location.pathname.includes('/p/');
+}
+
+function isCartPage() {
+    return window.location.pathname.includes('/shoppingcart/');
+}
+
+function initializeProductPage() {
+    console.log("Initializing product page functionality");
+    IkeaProductPage.compareProductPrice();
+}
+
+function initializeCartPage() {
+    console.log("Initializing cart page functionality");
+    setupCartObserver();
+}
+
+function setupCartObserver() {
+    const cartObserver = new MutationObserver((mutations) => {
+        for (let mutation of mutations) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                console.log("#one-checkout changed, initializing cart functionality");
+                initializeCartFunctionality();
+                cartObserver.disconnect();
+                break;
+            }
+        }
+    });
+
+    const cartElement = document.getElementById('one-checkout');
+    if (cartElement) {
+        cartObserver.observe(cartElement, { childList: true, subtree: true });
+    } else {
+        console.log("#one-checkout not found, retrying in 1000ms");
+        setTimeout(setupCartObserver, 1000);
+    }
+}
+
+async function initializeCartFunctionality() {
+    console.log("Initializing cart functionality");
+    await compareCartPrices();
+    setupCartObserver();
+}
+
+async function compareCartPrices() {
+    console.log("compareCartPrices function called");
+    const currentCartState = getCartState();
+    console.log("Current cart state:", currentCartState);
+    console.log("Last cart state:", lastCartState);
+    if (currentCartState !== lastCartState || lastCartState === '') {
+        console.log("Cart state changed or initial load, updating comparisons");
+        try {
+            cart = new Cart();
+            const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+            for (const itemElement of cartItemElements) {
+                // I'd like to be able to use const productId = itemElement.getAttribute('data-product-id'); but that ID doesn't work for constructing the URL, it's missing e.g. the s prefix, which is there sometimes but not always - investigate
+                const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop();
+                const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
+                const localPrice = parseFloat(localPriceElement.textContent.trim().replace(/[^0-9.,]/g, '').replace(',', '.'));
+                const quantity = parseInt(itemElement.querySelector('.cart-ingka-quantity-stepper__input').value);
+                const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
+                const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
+                const productName = `${nameElement.textContent.trim()} - ${descriptionElement.textContent.trim()}`;
+
+                await cart.addItem(productName, productId, localPrice / quantity, quantity);
+            }
+            const cartItems = cart.getComparisonData();
+            updateCartComparisons(cartItems);
+            lastCartState = currentCartState;
+        } catch (error) {
+            console.error("Error in compareCartPrices:", error);
+        }
+    } else {
+        console.log("Cart state unchanged, reapplying stored comparisons");
+        reapplyStoredComparisons();
+    }
+}
+
+function updateCartComparisons(cartItems) {
+    const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+    cartItemElements.forEach((itemElement) => {
+        const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop();
+        const cartItem = cartItems.find(item => item.id === productId);
+        if (cartItem) {
+            const comparisonHTML = IkeaDisplayUtils.generateComparisonHTML(cartItem);
+            let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+            if (!comparisonDiv) {
+                comparisonDiv = IkeaDisplayUtils.createComparisonDiv(comparisonHTML);
+                comparisonDiv.classList.add('ikea-price-comparison');
+                IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
+            } else {
+                comparisonDiv.innerHTML = comparisonHTML;
+            }
+            storedComparisons.set(productId, comparisonDiv.outerHTML);
+        }
+    });
+
+    const summaryHTML = IkeaDisplayUtils.updateCartSummary(cartItems);
+    storedComparisons.set('cartSummary', summaryHTML);
+}
+
+function reapplyStoredComparisons() {
+    const cartItems = document.querySelectorAll('.product_product__pvcUf');
+    cartItems.forEach(itemElement => {
+        const productId = itemElement.getAttribute('data-product-id');
+        const storedComparison = storedComparisons.get(productId);
+        if (storedComparison) {
+            let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+            if (!comparisonDiv) {
+                itemElement.insertAdjacentHTML('beforeend', storedComparison);
+            }
+        }
+    });
+
+    const storedSummary = storedComparisons.get('cartSummary');
+    if (storedSummary) {
+        let summaryDiv = document.getElementById('ikea-price-comparison-summary');
+        if (!summaryDiv) {
+            IkeaDisplayUtils.insertSummaryDiv(storedSummary);
+        }
+    }
+}
+
+function getCartState() {
+    const cartItems = document.querySelectorAll('.product_product__pvcUf');
+    console.log("Found", cartItems.length, "cart items");
+    const state = Array.from(cartItems).map(item => {
+        const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid').split('_').pop() : '';
+        const quantityInput = item.querySelector('.cart-ingka-quantity-stepper__input');
+        const quantity = quantityInput ? quantityInput.value : '1';
+        console.log("Cart item:", id, "Quantity:", quantity);
+        return `${id}:${quantity}`;
+    }).join(',');
+    console.log("Cart state:", state);
+    return state;
+}
+
+function setupCartObserver() {
+    console.log("Setting up cart observer");
+    cartObserver = new MutationObserver(debounce(() => {
+        console.log("Cart mutation observed");
+        compareCartPrices();
+    }, 500));
+
+    function attachObserver() {
+        const desktopContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V');
+        const mobileContainer = document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
+        const cartContainer = desktopContainer || mobileContainer;
+
+        if (cartContainer) {
+            cartObserver.observe(cartContainer, { childList: true, subtree: true });
+            console.log("Cart observer attached to", desktopContainer ? "desktop" : "mobile", "container");
+            attachCartEventListeners();
+            return true;
+        }
+        console.log("Cart container not found, will retry");
+        return false;
+    }
+
+    function attemptAttachment(retries = 0, maxRetries = 10) {
+        if (attachObserver()) return;
+        if (retries < maxRetries) {
+            setTimeout(() => attemptAttachment(retries + 1), 1000);
+        } else {
+            console.error("Failed to attach cart observer after maximum retries");
+        }
+    }
+
+    attemptAttachment();
+
+    resizeObserver = new ResizeObserver(debounce(() => {
+        console.log("Window resized, reattaching cart observer and reapplying comparisons");
+        cartObserver.disconnect();
+        attemptAttachment();
+        reapplyStoredComparisons();
+    }, 500));
+
+    resizeObserver.observe(document.body);
+}
+
+function attachCartEventListeners() {
+    console.log("Attaching cart event listeners");
+    document.querySelectorAll('.cart-ingka-quantity-stepper__input').forEach(input => {
+        input.addEventListener('change', debounce((event) => {
+            const productId = event.target.closest('.product_product__pvcUf').getAttribute('data-product-id');
+            const newQuantity = parseInt(event.target.value);
+            cart.updateItemQuantity(productId, newQuantity);
+            compareCartPrices();
+        }, 500));
+    });
+
+    document.querySelectorAll('.cart-ingka-product-actions__button').forEach(button => {
+        if (button.textContent.trim().toLowerCase() === 'remove') {
+            button.addEventListener('click', (event) => {
+                const productId = event.target.closest('.product_product__pvcUf').getAttribute('data-product-id');
+                cart.removeItem(productId);
+                setTimeout(compareCartPrices, 500);
+            });
+        }
+    });
+}
+
+function debounce(func, delay) {
+    let debounceTimer;
+    return function () {
+        const context = this;
+        const args = arguments;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    }
+}
+
+window.addEventListener('load', initializeExtension);
+
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        console.log("URL changed, calling initializeExtension");
+        if (cartObserver) cartObserver.disconnect();
+        if (resizeObserver) resizeObserver.disconnect();
+        storedComparisons.clear();
+        initializeExtension();
+    }
+}).observe(document, { subtree: true, childList: true });
+
+console.log("Script loaded");
+
+
+
+./src/background.js:
+
+// background.js
+let exchangeRates = {};
+
+async function fetchExchangeRates() {
+    const url = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
+    try {
+        const response = await fetch(url);
+        const text = await response.text();
+        const lines = text.split('\n').slice(2); // Skip the first two lines
+        lines.forEach(line => {
+            const [, , , code, rate] = line.split('|');
+            if (code && rate) {
+                exchangeRates[code] = parseFloat(rate.replace(',', '.'));
+            }
+        });
+        console.log('Exchange rates fetched:', exchangeRates);
+    } catch (error) {
+        console.error('Error fetching exchange rates:', error);
+    }
+}
+
+// Fetch exchange rates when the background script starts
+fetchExchangeRates();
+
+// Set up a listener for messages from the content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "getExchangeRates") {
+        sendResponse(exchangeRates);
+    }
+});
+
+// Optionally, set up periodic refresh of exchange rates (e.g., every hour)
+setInterval(fetchExchangeRates, 3600000); // 3600000 ms = 1 hour
+
+
+./src/exchange-rates.js:
+
+// exchange-rates.js
+var IkeaExchangeRates = (function () {
+    let exchangeRates = {};
+
+    function getExchangeRates() {
+        return new Promise((resolve) => {
+            chrome.runtime.sendMessage({ action: "getExchangeRates" }, (response) => {
+                exchangeRates = response;
+                resolve(exchangeRates);
+            });
+        });
+    }
+
+    return {
+        getExchangeRates: getExchangeRates,
+        getRates: function () { return exchangeRates; }
+    };
+})();
+
+
+./src/cart.js:
+
+// cart.js
+class Cart {
+    constructor() {
+        this.items = new Map();
+    }
+
+    async addItem(productName, productId, localPrice, quantity) {
+        if (this.items.has(productId)) {
+            const item = this.items.get(productId);
+            item.setQuantity(item.quantity + quantity);
+        } else {
+            const newItem = await new ProductItem(productName, productId, localPrice, quantity);
+            this.items.set(productId, newItem);
+        }
+    }
+
+    removeItem(productId) {
+        this.items.delete(productId);
+    }
+
+    updateItemQuantity(productId, newQuantity) {
+        if (this.items.has(productId)) {
+            this.items.get(productId).setQuantity(newQuantity);
+        } else {
+            console.error(`Item with id ${productId} not found in cart`);
+        }
+    }
+
+    getItems() {
+        return Array.from(this.items.values());
+    }
+
+    getTotalPrice() {
+        return this.getItems().reduce((total, item) => total + item.getTotalPrice(), 0);
+    }
+
+    getComparisonData() {  // todo: rename to something more descriptive
+        return this.getItems().map(item => ({
+            id: item.id,
+            productName: item.productName,
+            quantity: item.quantity,
+            localPriceForQuantity: item.getTotalPrice(),  // todo: does this have to be done here?
+            otherCountries: item.getComparisonDataForQuantity()
+        }));
+    }
+}
+
+
+./src/cart-comparison.js:
+
+var IkeaCartComparison = (function () {
+    async function compareCartPrices() {
+        const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+        const cartItemObjects = await Promise.all(Array.from(cartItemElements).map(createCartItem));
+        await Promise.all(cartItemObjects.map(item => item.fetchForeignPrices()));
+        const cartItems = cartItemObjects.map(item => ({
+            localPriceForQuantity: item.localPrice * item.quantity,
+            otherCountries: item.getComparisonData(),  // this will have amounts multiplied by quantity
+            quantity: item.quantity,
+            productName: item.productName,
+            product: item.product
+        }));
+        return cartItems;
+    }
+
+    function createCartItem(itemElement) {
+        const productUrl = itemElement.querySelector('.cart-ingka-price-module__name a').href;
+        const productId = productUrl.split('-').pop();
+        const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
+        if (!localPriceElement) {
+            throw new Error('Local price element not found');
+        }
+        const localPrice = localPriceElement.textContent.trim();
+        const quantity = parseInt(itemElement.querySelector('.cart-ingka-quantity-stepper__input').value);
+        const localPriceNum = parseFloat(localPrice.replace(/[^0-9.,]/g, '').replace(',', '.'));
+        const localPricePerItem = localPriceNum / quantity;
+
+        const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
+        const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
+        const productName = `${nameElement.textContent.trim()} - ${descriptionElement.textContent.trim()}`;
+
+        return new CartItem(productName, productId, localPricePerItem, quantity);
+    }
+
+    return {
+        compareCartPrices: compareCartPrices
+    };
+})();
+
+
+./src/popup.html:
+
+
+
+
+./src/ProductPage.ts:
+
+// src/IkeaProductPage.ts
+
+import { ProductItem } from './ProductItem';
+import { IkeaDisplayUtils } from './IkeaDisplayUtils';
+import { IkeaDomUtils } from './IkeaDomUtils';
+
+const IkeaProductPage = {
+    async compareProductPrice(retryCount = 0) {
+        try {
+            const productId = window.location.href.replace(/\/$/, '').split('-').pop();
+            const localPriceElement = document.querySelector('.pip-temp-price__integer');
+            if (!localPriceElement) {
+                throw new Error('Local price element not found');
+            }
+            const localPrice = parseFloat(localPriceElement.textContent.trim().replace(/[^0-9.,]/g, '').replace(',', '.'));
+
+            const productNameElement = document.querySelector('.pip-header-section__title--big');
+            if (!productNameElement) {
+                throw new Error('Product name element not found');
+            }
+            const productName = productNameElement.textContent.trim();
+
+            const productItem = await new ProductItem(productName, productId, localPrice, 1);
+
+            IkeaDisplayUtils.displayProductComparison(productItem);
+        } catch (error) {
+            IkeaDomUtils.handleComparisonError(error, retryCount, this.compareProductPrice);
+        }
+    }
+};
+
+export default IkeaProductPage;
+
+
+./src/price-utils.js:
+
+// price-utils.js
+var IkeaPriceUtils = (function () {
+    const comparisonCountries = [
+        { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },  // TODO: rename code to countryCode, maybe name to countryName
+        { country: 'de', language: 'de', name: 'Německo', currencyCode: 'EUR' },
+        { country: 'at', language: 'de', name: 'Rakousko', currencyCode: 'EUR' },
+        { country: 'sk', language: 'sk', name: 'Slovensko', currencyCode: 'EUR' },
+    ];
+
+    function fetchForeignPrices(productId) {  // TODO: parse strings already in this function
+        return Promise.all(comparisonCountries.map(async (comp) => {
+            const comparisonUrl = `https://www.ikea.com/${comp.country}/${comp.language}/p/foo-${productId}/`;
+            try {
+                const response = await fetch(comparisonUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} for ${comp.name}`);
+                }
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const comparisonPriceElement = doc.querySelector('.pip-temp-price__integer');
+                if (!comparisonPriceElement) {
+                    return { ...comp, price: null, isAvailable: false };
+                }
+                return {
+                    ...comp,
+                    price: comparisonPriceElement.textContent.trim(),
+                    isAvailable: true,
+                    url: comparisonUrl
+                };
+            } catch (error) {
+                console.warn(`Error fetching price for ${comp.name}:`, error);
+                return { ...comp, price: null, isAvailable: false };
+            }
+        }));
+    }
+
+    function calculatePriceDifference(localPriceNum, result) {
+        if (!result.isAvailable || result.price === null) {  // ideally isAvailable should be set, but just in case we also check for the price being null directly
+            return { convertedPrice: null, percentageDiff: null };
+        }
+        // check if result price is not a string, if so raise an error
+        if (typeof result.price !== 'string') {
+            throw new Error('Result (other country) price is not a string');
+        }
+        const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace('.', '').replace(',', '.'));
+        let exchangeRate = IkeaExchangeRates.getRates()[result.currencyCode] || 1;
+        const convertedPrice = comparisonPriceNum * exchangeRate;
+        const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0); // todo: toFixed is not a good way to round, use rounding function
+        return { convertedPrice, percentageDiff };
+    }
+
+    function formatPrice(price) {
+        if (price === null) return 'N/A';
+        return Math.ceil(price).toLocaleString("cs-CZ", { style: "currency", currency: "CZK" }).replace(",00", ",-");
+    }
+
+    return {
+        fetchForeignPrices: fetchForeignPrices,
+        calculatePriceDifference: calculatePriceDifference,
+        formatPrice: formatPrice,
+        comparisonCountries: comparisonCountries
+    };
+})();
+
+
+./src/display-utils.js:
+
+// display-utils.js
+var IkeaDisplayUtils = (function () {
+    function updateCartComparisons() {
+        console.log("Updating cart comparisons");
+        updateCartItemComparisons(comparisonResults);
+        updateCartSummary(comparisonResults);
+    }
+
+    function insertSummaryDiv(summaryHTML) {
+        console.log("Inserting summary div");
+        let summaryDiv = document.getElementById('ikea-price-comparison-summary');
+        if (!summaryDiv) {
+            summaryDiv = document.createElement('div');
+            summaryDiv.id = 'ikea-price-comparison-summary';
+            summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+        }
+        summaryDiv.innerHTML = summaryHTML;
+
+        const insertAttempt = () => {
+            const targetSelector = '.checkoutInformation_checkoutInformation__Xh4rd';
+            const targetElement = document.querySelector(targetSelector);
+            if (targetElement) {
+                console.log("Target element found, inserting summary div");
+                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+            } else {
+                console.log("Target element for summary not found, retrying in 500ms");
+                setTimeout(insertAttempt, 500);
+            }
+        };
+        insertAttempt();
+    }
+
+    function updateCartSummary(cartItems) {
+        console.log("Updating cart summary");
+        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = calculateSavings(cartItems);
+        const summaryHTML = generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
+
+        insertSummaryDiv(summaryHTML);
+
+        return summaryHTML;
+    }
+
+    function displayProductComparison(product) {
+        const comparisonHTML = generateComparisonHTML(product);
+        const comparisonDiv = createComparisonDiv(comparisonHTML);
+        IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
+    }
+
+    function generateComparisonHTML(cartItem) {
+        let html = cartItem.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${cartItem.quantity} ks v jiných zemích:</strong><br><br>`;
+        cartItem.otherCountries.forEach(result => {
+            if (result.isAvailable) {
+                const formattedPrice = IkeaPriceUtils.formatPrice(result.totalPrice);
+                const color = result.priceDiff.percentageDiff > 0 ? 'red' : 'green';
+                html += `<a href="${result.url}" target="_blank" style="color: inherit; text-decoration: none;">${result.name}</a>: <span style="color: ${color};">${formattedPrice} (${result.priceDiff.percentageDiff > 0 ? '+' : ''}${result.priceDiff.percentageDiff} %)</span><br>`;
+            } else {
+                html += `<span style="color: gray;">${result.name}: Nedostupné</span><br>`;
+            }
+        });
+        return html;
+    }
+
+    function createComparisonDiv(html, additionalStyles = '') {
+        const div = document.createElement('div');
+        div.style.cssText = `background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px; ${additionalStyles}`;
+        div.innerHTML = html;
+        return div;
+    }
+
+    function calculateSavings(cartItems) {
+        let totalLocalPrice = 0;
+        let totalSavings = {};
+        let optimalSavings = 0;
+        let unavailableCounts = {};
+        let optimalPurchaseStrategy = [];
+
+        cartItems.forEach(item => {
+            totalLocalPrice += item.localPriceForQuantity;
+
+            let cheapestPrice = item.localPriceForQuantity;
+            let cheapestCountry = 'Česko';
+            let cheapestUrl = item.url;
+
+            item.otherCountries.forEach(result => {
+                if (!unavailableCounts[result.name]) {
+                    unavailableCounts[result.name] = 0;
+                }
+
+                if (!result.isAvailable) {
+                    unavailableCounts[result.name]++;
+                    return;
+                }
+
+                if (!totalSavings[result.name]) {
+                    totalSavings[result.name] = 0;
+                }
+                if (result.totalPrice < item.localPriceForQuantity) {
+                    totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
+                }
+
+                if (result.totalPrice < cheapestPrice) {
+                    cheapestPrice = result.totalPrice;
+                    cheapestCountry = result.name;
+                    cheapestUrl = result.url;
+                }
+            });
+
+            optimalSavings += item.localPriceForQuantity - cheapestPrice;
+            optimalPurchaseStrategy.push({
+                productName: item.productName,
+                country: cheapestCountry,
+                price: cheapestPrice,
+                saving: item.localPriceForQuantity - cheapestPrice,
+                url: cheapestUrl,
+                quantity: item.quantity
+            });
+        });
+
+        return { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
+    }
+
+    function generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy) {
+        let html = '<h3 style="font-size: 1.35rem;">Shrnutí úspor:</h3><br>';
+        html += '<strong style="font-size: 1.2rem;">Celý nákup v jedné zemi:</strong><br><br>';
+
+        const sortedSavings = Object.entries(totalSavings).sort((a, b) => b[1] - a[1]);
+        for (const [country, savings] of sortedSavings) {
+            const unavailableCount = unavailableCounts[country];
+            html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : ''}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings)}</span>`;
+            if (unavailableCount > 0) {
+                html += ` <a href="#" class="show-unavailable" style="font-size: 0.8rem;" data-country="${country}">(${unavailableCount} ${unavailableCount === 1 ? 'položka nedostupná' : 'položky nedostupné'})</a>`;
+            }
+            html += '<br>';
+        }
+        html += `<br><strong>Maximální úspora:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span>`;
+        html += '<br><br><strong style="font-size: 1.2rem;">Optimální strategie nákupu:</strong><br><br>';
+        const groupedItems = {};
+        optimalPurchaseStrategy.forEach(item => {
+            if (!groupedItems[item.country]) {
+                groupedItems[item.country] = [];
+            }
+            groupedItems[item.country].push(item);
+        });
+
+        for (const country in groupedItems) {
+            html += `<strong>${country}:</strong><br>`;
+            html += `<ul style="margin-left: 1em;">`;
+            groupedItems[country].forEach(item => {
+                html += `<li><a href="${item.url}" target="_blank">${item.productName}</a> (${item.quantity} ks):<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`
+                if (country !== 'Česko') {
+                    html += ` <span style="white-space: nowrap; color: green; font-size: 0.8rem;">(-${IkeaPriceUtils.formatPrice(item.saving)})</span>`;
+                }
+                html += '</li>';
+            });
+            html += `</ul><br>`;
+        }
+
+        return html;
+    }
+
+    return {
+        displayProductComparison: displayProductComparison,
+        updateCartComparisons: updateCartComparisons,
+        generateComparisonHTML: generateComparisonHTML,
+        createComparisonDiv: createComparisonDiv,
+        insertSummaryDiv: insertSummaryDiv,
+        updateCartSummary: updateCartSummary,
+    };
+})();
+
+
+./src/manifest.json:
+
+{
+  "manifest_version": 3,
+  "name": "IKEA Product Price Comparator",
+  "version": "1.0",
+  "description": "Compare IKEA product prices across different country websites",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.ikea.com/cz/cs/*",
+    "https://www.cnb.cz/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.ikea.com/*/p/*",
+        "https://*.ikea.com/*/shoppingcart/"
+      ],
+      "js": [
+        "exchange-rates.js",
+        "price-utils.js",
+        "dom-utils.js",
+        "display-utils.js",
+        "product-item.js",
+        "cart.js",
+        "product-page.js",
+        "cart-comparison.js",
+        "main.js"
+      ],
+      "type": "module"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
+
+
+./src/dom-utils.js:
+
+// dom-utils.js
+var IkeaDomUtils = (function () {
+    function insertAfterElement(selector, newElement, context = document) {
+        const referenceElement = context.querySelector(selector);
+        if (referenceElement && referenceElement.parentNode) {
+            referenceElement.parentNode.insertBefore(newElement, referenceElement.nextSibling);
+        } else {
+            document.body.appendChild(newElement);
+        }
+    }
+
+    function handleComparisonError(error, retryCount, retryFunction) {
+        console.error('Error fetching comparison prices:', error);
+        if (retryCount < 3) {
+            console.log(`Retrying (${retryCount + 1}/3)...`);
+            setTimeout(() => retryFunction(retryCount + 1), 2000);
+        } else {
+            displayError('Unable to fetch comparison prices. The product might not be available in some countries.');
+        }
+    }
+
+    function displayError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = 'background-color: #ffeeee; color: #ff0000; padding: 10px; margin-top: 10px; border-radius: 5px;';
+        errorDiv.textContent = message;
+        insertAfterElement('.pip-temp-price-module__addons', errorDiv);
+    }
+
+    return {
+        insertAfterElement: insertAfterElement,
+        handleComparisonError: handleComparisonError,
+        displayError: displayError
+    };
+})();
+
+
+./src/ProductItem.ts:
+
+import { IkeaPriceUtils } from './IkeaPriceUtils'; // Adjust the import path as necessary
+
+export class ProductItem {
+    productName: string;
+    id: string;
+    localPricePerItem: number;
+    quantity: number;
+    url: string;
+    otherCountries: any[];
+
+    constructor(productName: string, id: string, localPrice: number, quantity: number = 1) {
+        return (async () => {
+            this.productName = productName;
+            this.id = id;
+            this.localPricePerItem = localPrice;
+            this.quantity = quantity;
+            this.url = `https://www.ikea.com/cz/cs/p/-${this.id}`;
+            await this.fetchAndCalculateOtherCountries();
+            return this;
+        })() as unknown as ProductItem;
+    }
+
+    async fetchAndCalculateOtherCountries() {
+        const otherCountryDetails = await IkeaPriceUtils.fetchForeignPrices(this.id);
+        this.otherCountries = otherCountryDetails.map(details => ({
+            ...details,
+            priceDiff: details.isAvailable
+                ? IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
+                : { convertedPrice: null, percentageDiff: null },
+            totalPrice: details.isAvailable
+                ? IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details).convertedPrice * this.quantity
+                : null
+        }));
+    }
+
+    setQuantity(newQuantity: number) {
+        if (newQuantity < 0 || !Number.isInteger(newQuantity)) {
+            throw new Error('Quantity must be a non-negative integer');
+        }
+        this.quantity = newQuantity;
+        this.updateOtherCountriesTotalPrices();
+    }
+
+    updateOtherCountriesTotalPrices() {
+        this.otherCountries = this.otherCountries.map(country => ({
+            ...country,
+            totalPrice: country.isAvailable
+                ? country.priceDiff.convertedPrice * this.quantity
+                : null
+        }));
+    }
+
+    getTotalPrice() {
+        return this.localPricePerItem * this.quantity;
+    }
+
+    getComparisonDataForQuantity() {
+        return this.otherCountries.map(country => ({
+            ...country,
+            price: country.totalPrice !== null ? country.totalPrice.toFixed(2) : null
+        }));
+    }
+}

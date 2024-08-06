@@ -1,14 +1,35 @@
-// price-utils.js
-var IkeaPriceUtils = (function () {
-    const comparisonCountries = [
-        { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },  // TODO: rename code to countryCode, maybe name to countryName
+// IkeaPriceUtils.ts
+
+import { ExchangeRates } from './ExchangeRates';
+
+interface ComparisonCountry {
+    country: string;
+    language: string;
+    name: string;
+    currencyCode: string;
+}
+
+interface ForeignPriceResult extends ComparisonCountry {
+    price: string | null;
+    isAvailable: boolean;
+    url?: string;
+}
+
+interface PriceDifference {
+    convertedPrice: number | null;
+    percentageDiff: string | null;
+}
+
+export const IkeaPriceUtils = {
+    comparisonCountries: [
+        { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },
         { country: 'de', language: 'de', name: 'Německo', currencyCode: 'EUR' },
         { country: 'at', language: 'de', name: 'Rakousko', currencyCode: 'EUR' },
         { country: 'sk', language: 'sk', name: 'Slovensko', currencyCode: 'EUR' },
-    ];
+    ] as ComparisonCountry[],
 
-    function fetchForeignPrices(productId) {  // TODO: parse strings already in this function
-        return Promise.all(comparisonCountries.map(async (comp) => {
+    async fetchForeignPrices(productId: string): Promise<ForeignPriceResult[]> {
+        return Promise.all(this.comparisonCountries.map(async (comp) => {
             const comparisonUrl = `https://www.ikea.com/${comp.country}/${comp.language}/p/foo-${productId}/`;
             try {
                 const response = await fetch(comparisonUrl);
@@ -24,7 +45,7 @@ var IkeaPriceUtils = (function () {
                 }
                 return {
                     ...comp,
-                    price: comparisonPriceElement.textContent.trim(),
+                    price: comparisonPriceElement.textContent?.trim() ?? null,
                     isAvailable: true,
                     url: comparisonUrl
                 };
@@ -33,32 +54,24 @@ var IkeaPriceUtils = (function () {
                 return { ...comp, price: null, isAvailable: false };
             }
         }));
-    }
+    },
 
-    function calculatePriceDifference(localPriceNum, result) {
-        if (!result.isAvailable || result.price === null) {  // ideally isAvailable should be set, but just in case we also check for the price being null directly
+    calculatePriceDifference(localPriceNum: number, result: ForeignPriceResult): PriceDifference {
+        if (!result.isAvailable || result.price === null) {
             return { convertedPrice: null, percentageDiff: null };
         }
-        // check if result price is not a string, if so raise an error
         if (typeof result.price !== 'string') {
             throw new Error('Result (other country) price is not a string');
         }
         const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace('.', '').replace(',', '.'));
-        let exchangeRate = IkeaExchangeRates.getRates()[result.currencyCode] || 1;
+        let exchangeRate = ExchangeRates.getRates()[result.currencyCode] || 1;  // TODO: investigate performance impact - we get exchange rates every time
         const convertedPrice = comparisonPriceNum * exchangeRate;
-        const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0); // todo: toFixed is not a good way to round, use rounding function
+        const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0);
         return { convertedPrice, percentageDiff };
-    }
+    },
 
-    function formatPrice(price) {
+    formatPrice(price: number | null): string {
         if (price === null) return 'N/A';
         return Math.ceil(price).toLocaleString("cs-CZ", { style: "currency", currency: "CZK" }).replace(",00", ",-");
     }
-
-    return {
-        fetchForeignPrices: fetchForeignPrices,
-        calculatePriceDifference: calculatePriceDifference,
-        formatPrice: formatPrice,
-        comparisonCountries: comparisonCountries
-    };
-})();
+};
