@@ -28,6 +28,7 @@ async function fetchExchangeRates(): Promise<void> {
 fetchExchangeRates();
 
 // Set up a listener for messages from the content script
+// @ts-ignore
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "getExchangeRates") {
         sendResponse(exchangeRates);
