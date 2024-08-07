@@ -1,4 +1,4 @@
-import { IkeaPriceUtils } from './PriceUtils'; // Adjust the import path as necessary
+import { IkeaPriceUtils } from './PriceUtils.js'; // Adjust the import path as necessary
 
 export class ProductItem {
     productName: string;

@@ -1,6 +1,6 @@
 // IkeaPriceUtils.ts
 
-import { ExchangeRates } from './ExchangeRates';
+import { ExchangeRates } from './ExchangeRates.js';
 
 interface ComparisonCountry {
     country: string;

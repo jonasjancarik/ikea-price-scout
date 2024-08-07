@@ -1,8 +1,8 @@
 // IkeaDisplayUtils.ts
 
-import { IkeaPriceUtils } from './PriceUtils';
-import { IkeaDomUtils } from './DomUtils';
-import { ProductItem } from './ProductItem';
+import { IkeaPriceUtils } from './PriceUtils.js';
+import { IkeaDomUtils } from './DomUtils.js';
+import { ProductItem } from './ProductItem.js';
 
 interface CartItem {
     localPriceForQuantity: number;

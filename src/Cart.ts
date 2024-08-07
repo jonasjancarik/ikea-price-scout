@@ -1,6 +1,6 @@
 // Cart.ts
 
-import { ProductItem } from './ProductItem';
+import { ProductItem } from './ProductItem.js';
 
 export class Cart {
     private items: Map<string, ProductItem>;

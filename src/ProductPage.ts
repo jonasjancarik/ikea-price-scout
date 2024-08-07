@@ -1,8 +1,8 @@
 // src/IkeaProductPage.ts
 
-import { ProductItem } from './ProductItem';
-import { DisplayUtils } from './DisplayUtils';
-import { IkeaDomUtils } from './DomUtils';
+import { ProductItem } from './ProductItem.js';
+import { DisplayUtils } from './DisplayUtils.js';
+import { IkeaDomUtils } from './DomUtils.js';
 
 export const IkeaProductPage = {
     async compareProductPrice(retryCount = 0) {

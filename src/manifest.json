@@ -11,7 +11,8 @@
     "https://www.cnb.cz/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -20,9 +21,18 @@
         "https://*.ikea.com/*/shoppingcart/"
       ],
       "js": [
-        "main.js"
+        "content-script.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*"
       ],
-      "type": "module"
+      "matches": [
+        "https://*.ikea.com/*"
+      ]
     }
   ],
   "action": {
