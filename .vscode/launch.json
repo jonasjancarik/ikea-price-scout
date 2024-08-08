@@ -12,7 +12,8 @@
       ],
       "url": "https://www.ikea.com/cz/cs/shoppingcart/",
       "webRoot": "${workspaceFolder}/src",
-      "sourceMaps": true
+      "sourceMaps": true,
+      "preLaunchTask": "build:dev"
     }
   ]
 }

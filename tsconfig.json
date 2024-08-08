@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "lib": [
       "es2020",
-      "dom"
+      "dom",
+      "dom.iterable"
     ],
     "moduleResolution": "node"
   },
