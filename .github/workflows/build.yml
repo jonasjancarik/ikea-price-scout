@@ -1,4 +1,4 @@
-name: Build
+name: Build and Push
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '22'
+        node-version: '16'
 
     - name: Install dependencies
       run: npm install
@@ -27,8 +27,13 @@ jobs:
     - name: Build project
       run: npm run build:prod
 
-    - name: Upload production build
-      uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist/
+    - name: Commit and push dist folder
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        # Force add the dist folder
+        git add -f dist
+        git commit -m "Update dist folder"
+        git push origin HEAD:main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
