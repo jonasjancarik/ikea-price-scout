@@ -13,7 +13,8 @@
       "dom",
       "dom.iterable"
     ],
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "src"

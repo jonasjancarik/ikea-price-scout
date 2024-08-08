@@ -2,6 +2,7 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "outDir": "./dev-dist",
-        "sourceMap": true
+        "sourceMap": true,
+        "forceConsistentCasingInFileNames": true
     }
 }
