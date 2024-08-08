@@ -9,6 +9,13 @@ interface ModuleUrls {
     ProductItem: string;
 }
 
+// Define types for the imported modules
+type IkeaProductPageModule = typeof import('./ProductPage');
+type CartModule = typeof import('./Cart');
+type ExchangeRatesModule = typeof import('./ExchangeRates');
+type DisplayUtilsModule = typeof import('./DisplayUtils');
+type IkeaDomUtilsModule = typeof import('./DomUtils');
+
 export default async function initializeExtension(moduleUrls: ModuleUrls) {
     const [
         { IkeaProductPage },
@@ -16,23 +23,26 @@ export default async function initializeExtension(moduleUrls: ModuleUrls) {
         { ExchangeRates },
         { DisplayUtils },
         { IkeaDomUtils },
-        { IkeaPriceUtils },
-        { ProductItem }
-    ] = await Promise.all([
-        import(moduleUrls.ProductPage),
-        import(moduleUrls.Cart),
-        import(moduleUrls.ExchangeRates),
-        import(moduleUrls.DisplayUtils),
-        import(moduleUrls.DomUtils),
-        import(moduleUrls.PriceUtils),
-        import(moduleUrls.ProductItem)
-    ]);
+    ]:
+        [
+            IkeaProductPageModule,
+            CartModule,
+            ExchangeRatesModule,
+            DisplayUtilsModule,
+            IkeaDomUtilsModule
+        ] = await Promise.all([
+            import(moduleUrls.ProductPage),
+            import(moduleUrls.Cart),
+            import(moduleUrls.ExchangeRates),
+            import(moduleUrls.DisplayUtils),
+            import(moduleUrls.DomUtils),
+        ]);
 
     let cartObserver: MutationObserver | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let lastCartState = '';
     let storedComparisons = new Map<string, string>();
-    let cart: Cart | null = null;
+    let cart: typeof Cart | null = null;
 
     async function initializeExtension(): Promise<void> {
         console.log("Initializing extension");
