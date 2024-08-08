@@ -5,11 +5,13 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:dev": "rimraf dist && tsc --project tsconfig.dev.json; npm run copy",
-    "build:prod": "rimraf dist && tsc --project tsconfig.prod.json; npm run copy",
-    "copy": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
+    "build:dev": "rimraf dist && tsc --project tsconfig.dev.json; npm run copy:dev",
+    "build:prod": "rimraf dist && tsc --project tsconfig.prod.json; npm run copy:prod",
+    "copy:dev": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist/",
+    "copy:prod": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
     "lint": "eslint 'src/**/*.{js,ts}'",
-    "format": "prettier --write 'src/**/*.{js,ts,json,css,html}'"
+    "format": "prettier --write 'src/**/*.{js,ts,json,css,html}'",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "Jonáš Jančařík",
@@ -19,6 +21,7 @@
     "@typescript-eslint/parser": "^8.0.1",
     "cpx": "^1.5.0",
     "eslint": "^9.8.0",
+    "husky": "^9.1.4",
     "rimraf": "^6.0.1",
     "typescript": "^5.5.4"
   }

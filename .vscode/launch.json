@@ -6,9 +6,9 @@
       "request": "launch",
       "name": "Launch Chrome with Extension",
       "runtimeArgs": [
-        "--load-extension=${workspaceFolder}/dist",
+        "--load-extension=${workspaceFolder}/dev-dist",
         "--start-maximized",
-        "--disable-extensions-except=${workspaceFolder}/dist"
+        "--disable-extensions-except=${workspaceFolder}/dev-dist"
       ],
       "url": "https://www.ikea.com/cz/cs/shoppingcart/",
       "webRoot": "${workspaceFolder}/src",

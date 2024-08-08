@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "IKEA Product Price Comparator",
+  "version": "1.0",
+  "description": "Compare IKEA product prices across different country websites",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.ikea.com/cz/cs/*",
+    "https://www.cnb.cz/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.ikea.com/*/p/*",
+        "https://*.ikea.com/*/shoppingcart/"
+      ],
+      "js": [
+        "content-script.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*"
+      ],
+      "matches": [
+        "https://*.ikea.com/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
