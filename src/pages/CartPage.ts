@@ -45,7 +45,9 @@ export class CartPage {
 
                 await Promise.all(cartItemPromises);
                 const cartItems = this.cart.getComparisonData();
-                this.updateCartComparisons(cartItems);
+                if (cartItems.length > 0) {
+                    this.updateCartComparisons(cartItems);
+                }
                 this.lastCartState = currentCartState;
             } catch (error) {
                 console.error("Error in compareCartPrices:", error);
