@@ -30,7 +30,7 @@ export const IkeaPriceUtils = {
 
     async fetchForeignPrices(productId: string): Promise<ForeignPriceResult[]> {
         return Promise.all(this.comparisonCountries.map(async (comp) => {
-            const comparisonUrl = `https://www.ikea.com/${comp.country}/${comp.language}/p/foo-${productId}/`;
+            const comparisonUrl = `https://www.ikea.com/${comp.country}/${comp.language}/p/-${productId}/`;
             try {
                 const response = await fetch(comparisonUrl);
                 if (!response.ok) {
@@ -43,9 +43,24 @@ export const IkeaPriceUtils = {
                 if (!comparisonPriceElement) {
                     return { ...comp, price: null, isAvailable: false };
                 }
+                let priceParsedFloat;
+                try {
+                    let priceParsed = comparisonPriceElement.textContent?.trim().replace('.', '').replace(' ', '') ?? null;
+                    if (priceParsed) {
+                        priceParsedFloat = parseFloat(priceParsed);
+                    }
+                } catch (error) {
+                    if (error instanceof SyntaxError) {
+                        console.warn(`Error parsing price for ${comp.name}:`, error);
+                        return { ...comp, price: null, isAvailable: false, url: comparisonUrl };
+                    } else {
+                        throw error;
+                    }
+                }
+                
                 return {
                     ...comp,
-                    price: comparisonPriceElement.textContent?.trim() ?? null,
+                    price: priceParsedFloat,
                     isAvailable: true,
                     url: comparisonUrl
                 };
@@ -56,18 +71,20 @@ export const IkeaPriceUtils = {
         }));
     },
 
-    calculatePriceDifference(localPriceNum: number, result: ForeignPriceResult): PriceDifference {
+    async calculatePriceDifference(localPriceNum: number, result: ForeignPriceResult): PriceDifference {
         if (!result.isAvailable || result.price === null) {
             return { convertedPrice: null, percentageDiff: null };
         }
-        if (typeof result.price !== 'string') {
-            throw new Error('Result (other country) price is not a string');
+        try {
+            let exchangeRates = await ExchangeRates.getExchangeRates();
+            let exchangeRate = exchangeRates[result.currencyCode] || 1;
+            const convertedPrice = parseFloat(result.price) * exchangeRate;  // we shouldn't have to parseFloat here, but typescript is complaining
+            const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0);
+            return { convertedPrice, percentageDiff };
+        } catch (error) {
+            console.error("Error calculating price difference:", error);
+            return { convertedPrice: null, percentageDiff: null };
         }
-        const comparisonPriceNum = parseFloat(result.price.replace(' ', '').replace('.', '').replace(',', '.'));
-        let exchangeRate = ExchangeRates.getRates()[result.currencyCode] || 1;  // TODO: investigate performance impact - we get exchange rates every time
-        const convertedPrice = comparisonPriceNum * exchangeRate;
-        const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0);
-        return { convertedPrice, percentageDiff };
     },
 
     formatPrice(price: number | null): string {

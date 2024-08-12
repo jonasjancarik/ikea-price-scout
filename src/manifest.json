@@ -4,7 +4,9 @@
   "version": "1.0",
   "description": "Compare IKEA product prices across different country websites",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "alarms"
   ],
   "host_permissions": [
     "https://*.ikea.com/cz/cs/*",

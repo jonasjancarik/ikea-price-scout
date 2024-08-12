@@ -22,15 +22,21 @@ export class ProductItem {
 
     async fetchAndCalculateOtherCountries() {
         const otherCountryDetails = await IkeaPriceUtils.fetchForeignPrices(this.id);
-        this.otherCountries = otherCountryDetails.map(details => ({
-            ...details,
-            priceDiff: details.isAvailable
-                ? IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
-                : { convertedPrice: null, percentageDiff: null },
-            totalPrice: details.isAvailable
-                ? IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details).convertedPrice * this.quantity
-                : null
-        }));
+        this.otherCountries = await Promise.all(otherCountryDetails.map(async (details) => {
+            const priceDiff = details.isAvailable
+                ? await IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
+                : { convertedPrice: null, percentageDiff: null };
+
+            const totalPrice = details.isAvailable
+                ? priceDiff.convertedPrice * this.quantity
+                : null;
+
+            return {
+                ...details,
+                priceDiff,
+                totalPrice,
+            };
+        }));        
     }
 
     setQuantity(newQuantity: number) {
