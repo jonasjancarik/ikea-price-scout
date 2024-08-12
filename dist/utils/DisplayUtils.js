@@ -84,9 +84,10 @@ export const DisplayUtils = {
                 if (!totalSavings[result.name]) {
                     totalSavings[result.name] = 0;
                 }
-                if (result.totalPrice < item.localPriceForQuantity) {
-                    totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
-                }
+                // if (result.totalPrice < item.localPriceForQuantity) {
+                // totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
+                // }  // todo: we are calculating the total difference - think about how to present this clearly in the UI (maybe they are interested in buying only the cheaper ones in that country and want to see clearly how much they save)
+                totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
                 if (result.totalPrice < cheapestPrice) {
                     cheapestPrice = result.totalPrice;
                     cheapestCountry = result.name;
@@ -111,7 +112,7 @@ export const DisplayUtils = {
         const sortedSavings = Object.entries(totalSavings).sort((a, b) => b[1] - a[1]);
         for (const [country, savings] of sortedSavings) {
             const unavailableCount = unavailableCounts[country];
-            html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : ''}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings)}</span>`;
+            html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : 'style="color: red;"'}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings > 0 ? savings : -savings)}</span>`;
             if (unavailableCount > 0) {
                 html += ` <a href="#" class="show-unavailable" style="font-size: 0.8rem;" data-country="${country}">(${unavailableCount} ${unavailableCount === 1 ? 'položka nedostupná' : 'položky nedostupné'})</a>`;
             }
