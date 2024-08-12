@@ -4,6 +4,7 @@
     const moduleUrls = {
         main: chrome.runtime.getURL('main.js'),
         ProductPage: chrome.runtime.getURL('pages/ProductPage.js'),
+        CartPage: chrome.runtime.getURL('pages/CartPage.js'),
         Cart: chrome.runtime.getURL('models/Cart.js'),
         ProductItem: chrome.runtime.getURL('models/ProductItem.js'),
         ExchangeRates: chrome.runtime.getURL('utils/ExchangeRates.js'),
