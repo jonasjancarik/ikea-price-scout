@@ -10,11 +10,11 @@ interface ModuleUrls {
 }
 
 // Define types for the imported modules
-type IkeaProductPageModule = typeof import('./ProductPage');
-type CartModule = typeof import('./Cart');
-type ExchangeRatesModule = typeof import('./ExchangeRates');
-type DisplayUtilsModule = typeof import('./DisplayUtils');
-type IkeaDomUtilsModule = typeof import('./DomUtils');
+type IkeaProductPageModule = typeof import('./pages/ProductPage');
+type CartModule = typeof import('./models/Cart');
+type ExchangeRatesModule = typeof import('./utils/ExchangeRates');
+type DisplayUtilsModule = typeof import('./utils/DisplayUtils');
+type IkeaDomUtilsModule = typeof import('./utils/DomUtils');
 
 export default async function initializeExtension(moduleUrls: ModuleUrls) {
     const [

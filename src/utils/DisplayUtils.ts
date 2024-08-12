@@ -2,7 +2,7 @@
 
 import { IkeaPriceUtils } from './PriceUtils.js';
 import { IkeaDomUtils } from './DomUtils.js';
-import { ProductItem } from './ProductItem.js';
+import { ProductItem } from '../models/ProductItem.js';
 
 interface CartItem {
     localPriceForQuantity: number;

@@ -10,7 +10,8 @@
         "--start-maximized",
         "--disable-extensions-except=${workspaceFolder}/dev-dist"
       ],
-      "url": "https://www.ikea.com/cz/cs/shoppingcart/",
+      // "url": "https://www.ikea.com/cz/cs/shoppingcart/",
+      "url": "https://www.ikea.com/cz/cs/p/vimle-5m-rohova-rozkl-pohovka-s-lenoskou-grann-bomstad-cerna-s79477377/",
       "webRoot": "${workspaceFolder}/src",
       "sourceMaps": true,
       "preLaunchTask": "build:dev"

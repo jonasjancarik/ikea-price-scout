@@ -1,4 +1,4 @@
-import { IkeaPriceUtils } from './PriceUtils.js'; // Adjust the import path as necessary
+import { IkeaPriceUtils } from '../utils/PriceUtils.js'; // Adjust the import path as necessary
 export class ProductItem {
     constructor(productName, id, localPrice, quantity = 1) {
         return (async () => {
