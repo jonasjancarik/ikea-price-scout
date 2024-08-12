@@ -8,10 +8,13 @@ export class CartPage {
         this.storedComparisons = new Map();
         this.cartObserver = null;
         this.resizeObserver = null;
+        this.entriesSeen = new Set();
+        this.lastWidth = 0;
     }
     async initialize() {
-        console.log("Initializing cart page functionality");
+        await this.compareCartPrices(); // Immediate initial comparison
         this.setupCartObserver();
+        this.attachCartEventListeners();
     }
     async compareCartPrices() {
         console.log("compareCartPrices function called");
@@ -23,20 +26,21 @@ export class CartPage {
             try {
                 this.cart = new Cart();
                 const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
-                for (const itemElement of cartItemElements) {
+                const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
                     const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop() || '';
                     const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
                     if (!localPriceElement) {
                         throw new Error('Local price element not found');
                     }
-                    const localPrice = parseFloat(localPriceElement.textContent?.trim().replace(/[^0-9.,]/g, '').replace(',', '.') || '0');
+                    const localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__addons .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
                     const quantityInput = itemElement.querySelector('.cart-ingka-quantity-stepper__input');
                     const quantity = parseInt(quantityInput.value);
                     const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
                     const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
                     const productName = `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
-                    await this.cart.addItem(productName, productId, localPrice / quantity, quantity);
-                }
+                    await this.cart.addItem(productName, productId, localPrice, quantity);
+                });
+                await Promise.all(cartItemPromises);
                 const cartItems = this.cart.getComparisonData();
                 this.updateCartComparisons(cartItems);
                 this.lastCartState = currentCartState;
@@ -102,15 +106,18 @@ export class CartPage {
             console.log("Cart item:", id, "Quantity:", quantity);
             return `${id}:${quantity}`;
         }).join(',');
-        console.log("Cart state:", state);
         return state;
     }
     setupCartObserver() {
+        let cartMutationCount = 0;
         console.log("Setting up cart observer");
         this.cartObserver = new MutationObserver(this.debounce(() => {
             console.log("Cart mutation observed");
-            this.compareCartPrices();
-        }, 500));
+            if (cartMutationCount === 0) { // TODO: This is a bit of a hack, but it works - the mutation observer is only needed once to detect that the cart has been added to the DOM
+                this.compareCartPrices();
+            }
+            cartMutationCount += 1;
+        }, 50));
         const attachObserver = () => {
             const desktopContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V');
             const mobileContainer = document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
@@ -118,7 +125,6 @@ export class CartPage {
             if (cartContainer) {
                 this.cartObserver?.observe(cartContainer, { childList: true, subtree: true });
                 console.log("Cart observer attached to", desktopContainer ? "desktop" : "mobile", "container");
-                this.attachCartEventListeners();
                 return true;
             }
             console.log("Cart container not found, will retry");
@@ -128,40 +134,80 @@ export class CartPage {
             if (attachObserver())
                 return;
             if (retries < maxRetries) {
-                setTimeout(() => attemptAttachment(retries + 1), 1000);
+                setTimeout(() => attemptAttachment(retries + 1), 500);
             }
             else {
                 console.error("Failed to attach cart observer after maximum retries");
             }
         };
         attemptAttachment();
-        this.resizeObserver = new ResizeObserver(this.debounce(() => {
-            console.log("Window resized, reattaching cart observer and reapplying comparisons");
-            this.cartObserver?.disconnect();
-            attemptAttachment();
+        const handleResize = this.debounce(() => {
+            console.log("Significant resize detected, checking if reattachment is necessary");
+            const desktopContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V');
+            const mobileContainer = document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
+            const currentContainer = desktopContainer || mobileContainer;
+            if (currentContainer && !currentContainer.contains(this.cartObserver?.takeRecords()[0]?.target)) {
+                console.log("Cart container changed, reattaching observer");
+                this.cartObserver?.disconnect();
+                this.cartObserver?.observe(currentContainer, { childList: true, subtree: true });
+            }
             this.reapplyStoredComparisons();
-        }, 500));
-        this.resizeObserver.observe(document.body);
+        }, 250);
+        this.resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                if (!this.entriesSeen.has(entry.target)) {
+                    this.entriesSeen.add(entry.target);
+                    this.lastWidth = entry.contentRect.width;
+                }
+                else {
+                    const widthDiff = Math.abs(entry.contentRect.width - this.lastWidth);
+                    if (widthDiff > 50) { // Only trigger for significant width changes
+                        this.lastWidth = entry.contentRect.width;
+                        handleResize();
+                    }
+                }
+            }
+        });
+        // Explicitly observe the element that contains the cart
+        const cartContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V') ||
+            document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
+        if (cartContainer) {
+            this.resizeObserver.observe(cartContainer);
+            console.log("ResizeObserver attached to cart container");
+        }
+        else {
+            console.error("Cart container not found for ResizeObserver");
+        }
     }
     attachCartEventListeners() {
         console.log("Attaching cart event listeners");
-        document.querySelectorAll('.cart-ingka-quantity-stepper__input').forEach(input => {
-            input.addEventListener('change', this.debounce((event) => {
-                const target = event.target;
-                const productId = target.closest('.product_product__pvcUf')?.getAttribute('data-product-id') || '';
-                const newQuantity = parseInt(target.value);
-                this.cart?.updateItemQuantity(productId, newQuantity);
+        document.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.parentElement?.matches('.cart-ingka-quantity-stepper__decrease, .cart-ingka-quantity-stepper__increase')) {
+                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
+                const quantityInput = target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-quantity-stepper__input');
+                const newQuantity = parseInt(quantityInput.value);
+                // this.cart?.updateItemQuantity(productId, newQuantity);
                 this.compareCartPrices();
-            }, 500));
+            }
         });
-        document.querySelectorAll('.cart-ingka-product-actions__button').forEach(button => {
-            if (button.textContent?.trim().toLowerCase() === 'remove') {
-                button.addEventListener('click', (event) => {
-                    const target = event.target;
-                    const productId = target.closest('.product_product__pvcUf')?.getAttribute('data-product-id') || '';
+        document.addEventListener('input', this.debounce((event) => {
+            const target = event.target;
+            if (target.matches('.cart-ingka-quantity-stepper__input')) {
+                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
+                const newQuantity = parseInt(target.value);
+                // this.cart?.updateItemQuantity(productId, newQuantity);
+                this.compareCartPrices();
+            }
+        }, 250));
+        document.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target?.parentElement?.attributes['data-testid'].value.startsWith('remove')) {
+                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
+                if (productId) {
                     this.cart?.removeItem(productId);
-                    setTimeout(() => this.compareCartPrices(), 500);
-                });
+                    setTimeout(() => this.compareCartPrices(), 250);
+                }
             }
         });
     }
@@ -176,5 +222,6 @@ export class CartPage {
         this.cartObserver?.disconnect();
         this.resizeObserver?.disconnect();
         this.storedComparisons.clear();
+        this.entriesSeen.clear();
     }
 }
