@@ -1,10 +1,7 @@
 export default async function initializeExtension(moduleUrls) {
-    const [{ IkeaProductPage }, { Cart }, { ExchangeRates }, { DisplayUtils }, { IkeaDomUtils }, { CartPage },] = await Promise.all([
+    const [{ IkeaProductPage }, { ExchangeRates }, { CartPage },] = await Promise.all([
         import(moduleUrls.ProductPage),
-        import(moduleUrls.Cart),
         import(moduleUrls.ExchangeRates),
-        import(moduleUrls.DisplayUtils),
-        import(moduleUrls.DomUtils),
         import(moduleUrls.CartPage),
     ]);
     let cartPage = null;

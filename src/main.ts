@@ -13,32 +13,20 @@ interface ModuleUrls {
 // Define types for the imported modules
 type IkeaProductPageModule = typeof import('./pages/ProductPage');
 type CartPageModule = typeof import('./pages/CartPage');
-type CartModule = typeof import('./models/Cart');
 type ExchangeRatesModule = typeof import('./utils/ExchangeRates');
-type DisplayUtilsModule = typeof import('./utils/DisplayUtils');
-type IkeaDomUtilsModule = typeof import('./utils/DomUtils');
 
 export default async function initializeExtension(moduleUrls: ModuleUrls) {
     const [
         { IkeaProductPage },
-        { Cart },
         { ExchangeRates },
-        { DisplayUtils },
-        { IkeaDomUtils },
         { CartPage },
     ]: [
             IkeaProductPageModule,
-            CartModule,
             ExchangeRatesModule,
-            DisplayUtilsModule,
-            IkeaDomUtilsModule,
             CartPageModule
         ] = await Promise.all([
             import(moduleUrls.ProductPage),
-            import(moduleUrls.Cart),
             import(moduleUrls.ExchangeRates),
-            import(moduleUrls.DisplayUtils),
-            import(moduleUrls.DomUtils),
             import(moduleUrls.CartPage),
         ]);
 
