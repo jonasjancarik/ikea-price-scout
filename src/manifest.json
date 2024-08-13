@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "IKEA Product Price Comparator",
-  "version": "0.0.1",
-  "description": "Compare IKEA product prices across different country websites",
+  "name": "IKEA Price Scout",
+  "version": "0.1",
+  "description": "Compare IKEA product prices across different country websites. Currently works for Czechia only.",
   "permissions": [
     "activeTab",
     "storage",
@@ -19,8 +19,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.ikea.com/*/p/*",
-        "https://*.ikea.com/*/shoppingcart/"
+        "https://*.ikea.com/cz/cs/p/*",
+        "https://*.ikea.com/cz/cs/shoppingcart/"
       ],
       "js": [
         "content-script.js"
