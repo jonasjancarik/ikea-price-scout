@@ -1,12 +1,12 @@
 import { IkeaPriceUtils } from '../utils/PriceUtils.js'; // Adjust the import path as necessary
 
 export class ProductItem {
-    productName: string;
-    id: string;
-    localPricePerItem: number;
-    quantity: number;
-    url: string;
-    otherCountries: any[];
+    productName: string = '';
+    id: string = '';
+    localPricePerItem: number = 0;
+    quantity: number = 1;
+    url: string = '';
+    otherCountries: any[] = [];
 
     constructor(productName: string, id: string, localPrice: number, quantity: number = 1) {
         return (async () => {
@@ -27,7 +27,7 @@ export class ProductItem {
                 ? await IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
                 : { convertedPrice: null, percentageDiff: null };
 
-            const totalPrice = details.isAvailable
+            const totalPrice = details.isAvailable && priceDiff.convertedPrice
                 ? priceDiff.convertedPrice * this.quantity
                 : null;
 

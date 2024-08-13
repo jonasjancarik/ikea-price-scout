@@ -1,7 +1,7 @@
 // IkeaDomUtils.ts
 
 export const IkeaDomUtils = {
-    insertAfterElement(selector: string, newElement: HTMLElement, context: Document | HTMLElement = document): void {
+    insertAfterElement(selector: string, newElement: Element, context: Document | HTMLElement = document): void {
         const referenceElement = context.querySelector(selector);
         if (referenceElement && referenceElement.parentNode) {
             referenceElement.parentNode.insertBefore(newElement, referenceElement.nextSibling);

@@ -35,12 +35,12 @@ export class CartPage {
                     }
 
                     let localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__addons .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
-                    
+
                     // check if the displayed price is the discounted price - in that case, use the other price field
                     if (itemElement.querySelector('.cart-ingka-price-module__addon')?.textContent?.includes('Původní cena')) {
                         localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__primary-currency-price .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
                     }
-                    
+
                     const quantityInput = itemElement.querySelector('.cart-ingka-quantity-stepper__input') as HTMLInputElement;
                     const quantity = parseInt(quantityInput.value);
                     const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
@@ -127,7 +127,7 @@ export class CartPage {
         let cartMutationCount = 0;
 
         console.log("Setting up cart observer");
-        this.cartObserver = new MutationObserver(this.debounce(() => {  
+        this.cartObserver = new MutationObserver(this.debounce(() => {
             console.log("Cart mutation observed");
             if (cartMutationCount === 0) { // TODO: This is a bit of a hack, but it works - the mutation observer is only needed once to detect that the cart has been added to the DOM
                 this.compareCartPrices();
@@ -228,8 +228,11 @@ export class CartPage {
 
         document.addEventListener('click', (event: Event) => {
             const target = event.target as HTMLElement;
-            if (target?.parentElement?.attributes['data-testid'].value.startsWith('remove')) {
-                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link') as HTMLAnchorElement).href.split('-').pop() || null; 
+            const parentElement = target?.parentElement;
+            const dataTestIdAttr = parentElement?.attributes.getNamedItem('data-testid');
+
+            if (dataTestIdAttr && dataTestIdAttr.value.startsWith('remove')) {
+                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link') as HTMLAnchorElement).href.split('-').pop() || null;
                 if (productId) {
                     this.cart?.removeItem(productId);
                     setTimeout(() => this.compareCartPrices(), 250);

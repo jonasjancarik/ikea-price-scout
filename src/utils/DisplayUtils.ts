@@ -4,7 +4,7 @@ import { IkeaPriceUtils } from './PriceUtils.js';
 import { IkeaDomUtils } from './DomUtils.js';
 import { ProductItem } from '../models/ProductItem.js';
 
-interface CartItem {
+interface CartItem {  // todo: should consolidate with ProductItem - if the only difference is that it has the localPriceForQuantity property
     localPriceForQuantity: number;
     otherCountries: any[];
     quantity: number;
@@ -29,11 +29,6 @@ interface OptimalPurchaseItem {
 }
 
 export const DisplayUtils = {
-    updateCartComparisons(comparisonResults: any) {
-        console.log("Updating cart comparisons");
-        this.updateCartItemComparisons(comparisonResults);
-        this.updateCartSummary(comparisonResults);
-    },
 
     insertSummaryDiv(summaryHTML: string) {
         console.log("Inserting summary div");
@@ -69,15 +64,15 @@ export const DisplayUtils = {
         return summaryHTML;
     },
 
-    displayProductComparison(product: ProductItem) {
+    displayProductComparison(product: ProductItem) {  // currently used on the product page only
         const comparisonHTML = this.generateComparisonHTML(product);
         const comparisonDiv = this.createComparisonDiv(comparisonHTML);
         IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
     },
 
-    generateComparisonHTML(cartItem: CartItem): string {
-        let html = cartItem.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${cartItem.quantity} ks v jiných zemích:</strong><br><br>`;
-        cartItem.otherCountries.forEach((result: any) => {
+    generateComparisonHTML(item: CartItem | ProductItem): string {
+        let html = item.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${item.quantity} ks v jiných zemích:</strong><br><br>`;
+        item.otherCountries.forEach((result: any) => {
             if (result.isAvailable) {
                 const formattedPrice = IkeaPriceUtils.formatPrice(result.totalPrice);
                 const color = result.priceDiff.percentageDiff > 0 ? 'red' : 'green';

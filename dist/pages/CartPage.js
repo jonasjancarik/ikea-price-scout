@@ -208,7 +208,9 @@ export class CartPage {
         }, 250));
         document.addEventListener('click', (event) => {
             const target = event.target;
-            if (target?.parentElement?.attributes['data-testid'].value.startsWith('remove')) {
+            const parentElement = target?.parentElement;
+            const dataTestIdAttr = parentElement?.attributes.getNamedItem('data-testid');
+            if (dataTestIdAttr && dataTestIdAttr.value.startsWith('remove')) {
                 const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
                 if (productId) {
                     this.cart?.removeItem(productId);

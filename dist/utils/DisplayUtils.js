@@ -2,11 +2,6 @@
 import { IkeaPriceUtils } from './PriceUtils.js';
 import { IkeaDomUtils } from './DomUtils.js';
 export const DisplayUtils = {
-    updateCartComparisons(comparisonResults) {
-        console.log("Updating cart comparisons");
-        this.updateCartItemComparisons(comparisonResults);
-        this.updateCartSummary(comparisonResults);
-    },
     insertSummaryDiv(summaryHTML) {
         console.log("Inserting summary div");
         let summaryDiv = document.getElementById('ikea-price-comparison-summary');
@@ -42,9 +37,9 @@ export const DisplayUtils = {
         const comparisonDiv = this.createComparisonDiv(comparisonHTML);
         IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
     },
-    generateComparisonHTML(cartItem) {
-        let html = cartItem.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${cartItem.quantity} ks v jiných zemích:</strong><br><br>`;
-        cartItem.otherCountries.forEach((result) => {
+    generateComparisonHTML(item) {
+        let html = item.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${item.quantity} ks v jiných zemích:</strong><br><br>`;
+        item.otherCountries.forEach((result) => {
             if (result.isAvailable) {
                 const formattedPrice = IkeaPriceUtils.formatPrice(result.totalPrice);
                 const color = result.priceDiff.percentageDiff > 0 ? 'red' : 'green';

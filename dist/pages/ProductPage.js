@@ -10,14 +10,17 @@ export const IkeaProductPage = {
             if (!localPriceElement) {
                 throw new Error('Local price element not found');
             }
-            const localPrice = parseFloat(localPriceElement.textContent.trim().replace(/[^0-9.,]/g, '').replace(',', '.'));
+            const localPriceStr = localPriceElement?.textContent?.trim().replace(/[^0-9.,]/g, '').replace(',', '.');
+            const localPrice = localPriceStr ? parseFloat(localPriceStr) : null;
             const productNameElement = document.querySelector('.pip-header-section__title--big');
             if (!productNameElement) {
                 throw new Error('Product name element not found');
             }
-            const productName = productNameElement.textContent.trim();
-            const productItem = await new ProductItem(productName, productId, localPrice, 1);
-            DisplayUtils.displayProductComparison(productItem);
+            const productName = productNameElement?.textContent?.trim() || '';
+            if (productName && productId && localPrice) {
+                const productItem = await new ProductItem(productName, productId, localPrice, 1);
+                DisplayUtils.displayProductComparison(productItem);
+            }
         }
         catch (error) {
             IkeaDomUtils.handleComparisonError(error, retryCount, this.compareProductPrice);

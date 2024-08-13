@@ -22,7 +22,7 @@ export const IkeaPriceUtils = {
                 if (!comparisonPriceElement) {
                     return { ...comp, price: null, isAvailable: false };
                 }
-                let priceParsedFloat;
+                let priceParsedFloat = null;
                 try {
                     let priceParsed = comparisonPriceElement.textContent?.trim().replace('.', '').replace(' ', '') ?? null;
                     if (priceParsed) {
@@ -58,8 +58,8 @@ export const IkeaPriceUtils = {
         try {
             let exchangeRates = await ExchangeRates.getExchangeRates();
             let exchangeRate = exchangeRates[result.currencyCode] || 1;
-            const convertedPrice = parseFloat(result.price) * exchangeRate; // we shouldn't have to parseFloat here, but typescript is complaining
-            const percentageDiff = ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0);
+            const convertedPrice = result.price ? result.price * exchangeRate : null;
+            const percentageDiff = convertedPrice ? ((convertedPrice - localPriceNum) / localPriceNum * 100).toFixed(0) : null;
             return { convertedPrice, percentageDiff };
         }
         catch (error) {
