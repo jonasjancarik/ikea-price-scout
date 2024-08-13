@@ -87,7 +87,7 @@ export class CartPage {
             this.updateCartSummary();
         }
     }
-    
+
     private updateItemComparison(item: ProductItem): void {
         const itemElement = document.querySelector(`${Selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(Selectors.cartPage.cartItem);
         if (itemElement) {
@@ -106,7 +106,7 @@ export class CartPage {
         const summaryHTML = this.generateCartSummaryHTML(cartItems);
         this.insertSummaryDiv(summaryHTML);
         this.storedComparisons.set('cartSummary', summaryHTML);
-    }    
+    }
 
     private updateLoadingState(cartItemElements: NodeListOf<Element>, isLoading: boolean): void {
         cartItemElements.forEach((itemElement) => {
@@ -145,7 +145,7 @@ export class CartPage {
         comparisonDiv.appendChild(loadingIndicator);
 
         return comparisonDiv;
-    }    
+    }
 
     private updateCartComparisons(cartItems: ProductItem[]): void {
         const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
@@ -305,24 +305,30 @@ export class CartPage {
                 const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
                 const newQuantity = parseInt((target as HTMLInputElement).value);
                 if (productId) {
-                    this.updateQuantity(productId, newQuantity);
+                    this.cart?.removeItem(productId);
+                    setTimeout(() => this.compareCartPrices(), 250);
                 }
             }
         }, 250));
 
         document.addEventListener('click', (event: Event) => {
             const target = event.target as HTMLElement;
-            const parentElement = target?.parentElement;
-            const dataTestIdAttr = parentElement?.attributes.getNamedItem('data-testid');
-
-            if (dataTestIdAttr && dataTestIdAttr.value.startsWith('remove')) {
-                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
-                if (productId) {
-                    this.cart?.removeItem(productId);
-                    setTimeout(() => this.compareCartPrices(), 250);
+            if (target.classList.contains('toggle-unavailable') || target.classList.contains('toggle-cheaper-items')) {
+                event.preventDefault();
+                const country = target.getAttribute('data-country');
+                const itemsDiv = document.querySelector(`.${target.classList.contains('toggle-unavailable') ? 'unavailable-items' : 'cheaper-items'}[data-country="${country}"]`) as HTMLElement;
+                if (itemsDiv) {
+                    if (itemsDiv.style.display === 'none') {
+                        itemsDiv.style.display = 'block';
+                        target.textContent = target.textContent!.replace(')', ' - skrýt)');
+                    } else {
+                        itemsDiv.style.display = 'none';
+                        target.textContent = target.textContent!.replace(' - skrýt)', ')');
+                    }
                 }
             }
         });
+
     }
 
     private insertSummaryDiv(summaryHTML: string) {
@@ -352,7 +358,7 @@ export class CartPage {
     }
 
     private generateCartSummaryHTML(cartItems: ProductItem[]): string {
-        const { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
+        const { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy, unavailableItems } = this.calculateSavings(cartItems);
 
         let html = '<h3 style="font-size: 1.35rem;">Srovnání cen</h3>';
 
@@ -361,8 +367,22 @@ export class CartPage {
 
         const sortedCheaperItems = Object.entries(differenceCheaperItems).sort((a, b) => b[1] - a[1]);
         for (const [country, savings] of sortedCheaperItems) {
-            const unavailableCount = unavailableCounts[country];
+            const cheaperItemsCount = this.getCheaperItemsCount(cartItems, country);
             html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : 'style="color: red;"'}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings > 0 ? savings : -savings)}</span>`;
+            if (cheaperItemsCount > 0) {
+                html += ` <a href="#" class="toggle-cheaper-items" data-country="${country}" style="font-size: 0.8rem;">(${cheaperItemsCount} ${cheaperItemsCount === 1 ? 'položka' : 'položky'})</a>`;
+                html += `<div class="cheaper-items" data-country="${country}" style="display: none; font-size: 0.8em; margin-bottom: -1rem;">`;
+                html += 'Levnější položky:<br>';
+                html += `<ul style="margin-left: 1em;">`;
+                cartItems.forEach(item => {
+                    const countryData = item.otherCountries.find(c => c.name === country);
+                    if (countryData && countryData.isAvailable && countryData.totalPrice < item.localPriceForQuantity) {
+                        const savings = item.localPriceForQuantity - countryData.totalPrice;
+                        html += `<li><a href="${countryData.url}" target="_blank" style="color: inherit; text-decoration: none;">${item.quantity}× ${item.productName}</a> (-${IkeaPriceUtils.formatPrice(savings)})<br>`;
+                    }
+                });
+                html += '</ul></div>';
+            }
             html += '<br>';
         }
 
@@ -374,7 +394,14 @@ export class CartPage {
             const unavailableCount = unavailableCounts[country];
             html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : 'style="color: red;"'}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings > 0 ? savings : -savings)}</span>`;
             if (unavailableCount > 0) {
-                html += ` <a href="#" class="show-unavailable" style="font-size: 0.8rem;" data-country="${country}">(${unavailableCount} ${unavailableCount === 1 ? 'položka nedostupná' : 'položky nedostupné'})</a>`;
+                html += ` <a href="#" class="toggle-unavailable" data-country="${country}" style="font-size: 0.8rem;">(${unavailableCount} ${unavailableCount === 1 ? 'položka nedostupná' : 'položky nedostupné'})</a>`;
+                html += `<div class="unavailable-items" data-country="${country}" style="display: none; font-size: 0.8em; margin-bottom: -1rem;">`;
+                html += 'Nedostupné položky:<br>';
+                html += `<ul style="margin-left: 1em;">`;
+                unavailableItems[country].forEach(item => {
+                    html += `<li><a href="${item.url}" target="_blank" style="color: inherit; text-decoration: none;">${item.name}</a><br>`;
+                });
+                html += '</ul></div>';
             }
             html += '<br>';
         }
@@ -395,7 +422,7 @@ export class CartPage {
             html += `<strong>${country}:</strong><br>`;
             html += `<ul style="margin-left: 1em;">`;
             groupedItems[country].forEach(item => {
-                html += `<li><a href="${item.url}" target="_blank">${item.productName}</a> (${item.quantity} ks):<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`
+                html += `<li>${item.quantity}× <a href="${item.url}" target="_blank" style="color: inherit; text-decoration: none;">${item.productName}</a>:<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`
                 if (country !== 'Česko') {
                     html += ` <span style="white-space: nowrap; color: green; font-size: 0.8rem;">(-${IkeaPriceUtils.formatPrice(item.saving)})</span>`;
                 }
@@ -412,6 +439,7 @@ export class CartPage {
         let differenceCheaperItems: { [country: string]: number } = {};  // savings if only items cheaper than local price were purchased in that country
         let optimalSavings = 0;
         let unavailableCounts: { [country: string]: number } = {};
+        let unavailableItems: { [country: string]: Array<{ name: string, url: string }> } = {};
         let optimalPurchaseStrategy: Array<{
             productName: string;
             country: string;
@@ -429,7 +457,6 @@ export class CartPage {
 
             // iterate over all other countries and find the cheapest one
             item.otherCountries.forEach((result: any) => {
-
                 // initiate unavailable count for this country
                 if (!unavailableCounts[result.name]) {
                     unavailableCounts[result.name] = 0;
@@ -438,6 +465,13 @@ export class CartPage {
                 // if the product is not available in this country, increment the unavailable count
                 if (!result.isAvailable) {
                     unavailableCounts[result.name]++;
+                    if (!unavailableItems[result.name]) {
+                        unavailableItems[result.name] = [];
+                    }
+                    unavailableItems[result.name].push({
+                        name: item.productName,
+                        url: item.url
+                    });
                     return;
                 }
 
@@ -478,7 +512,14 @@ export class CartPage {
             });
         });
 
-        return { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
+        return { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy, unavailableItems };
+    }
+
+    private getCheaperItemsCount(cartItems: ProductItem[], country: string): number {
+        return cartItems.filter(item => {
+            const countryData = item.otherCountries.find(c => c.name === country);
+            return countryData && countryData.isAvailable && countryData.totalPrice < item.localPriceForQuantity;
+        }).length;
     }
 
     private showSummaryLoadingIndicator(): void {
@@ -522,7 +563,7 @@ export class CartPage {
         summaryDiv.appendChild(loadingIndicator);
 
         return summaryDiv;
-    }    
+    }
 
     private debounce<F extends (...args: any[]) => any>(func: F, delay: number): (...args: Parameters<F>) => void {
         let debounceTimer: ReturnType<typeof setTimeout>;
