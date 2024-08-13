@@ -1,6 +1,4 @@
-// IkeaDisplayUtils.ts
 import { IkeaPriceUtils } from './PriceUtils.js';
-import { IkeaDomUtils } from './DomUtils.js';
 export const DisplayUtils = {
     insertSummaryDiv(summaryHTML) {
         console.log("Inserting summary div");
@@ -32,11 +30,6 @@ export const DisplayUtils = {
         this.insertSummaryDiv(summaryHTML);
         return summaryHTML;
     },
-    displayProductComparison(product) {
-        const comparisonHTML = this.generateComparisonHTML(product);
-        const comparisonDiv = this.createComparisonDiv(comparisonHTML);
-        IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
-    },
     generateComparisonHTML(item) {
         let html = item.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${item.quantity} ks v jiných zemích:</strong><br><br>`;
         item.otherCountries.forEach((result) => {
@@ -58,16 +51,14 @@ export const DisplayUtils = {
         return div;
     },
     calculateSavings(cartItems) {
-        let totalLocalPrice = 0;
         let totalSavings = {};
         let optimalSavings = 0;
         let unavailableCounts = {};
         let optimalPurchaseStrategy = [];
         cartItems.forEach(item => {
-            totalLocalPrice += item.localPriceForQuantity;
             let cheapestPrice = item.localPriceForQuantity;
             let cheapestCountry = 'Česko';
-            let cheapestUrl = item.url ?? '';
+            let cheapestUrl = item.url;
             item.otherCountries.forEach((result) => {
                 if (!unavailableCounts[result.name]) {
                     unavailableCounts[result.name] = 0;
@@ -79,9 +70,6 @@ export const DisplayUtils = {
                 if (!totalSavings[result.name]) {
                     totalSavings[result.name] = 0;
                 }
-                // if (result.totalPrice < item.localPriceForQuantity) {
-                // totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
-                // }  // todo: we are calculating the total difference - think about how to present this clearly in the UI (maybe they are interested in buying only the cheaper ones in that country and want to see clearly how much they save)
                 totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
                 if (result.totalPrice < cheapestPrice) {
                     cheapestPrice = result.totalPrice;

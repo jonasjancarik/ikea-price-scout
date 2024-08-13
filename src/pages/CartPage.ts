@@ -1,4 +1,5 @@
 import { Cart } from '../models/Cart.js';
+import { ProductItem } from '../models/ProductItem.js';
 import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
 
@@ -51,7 +52,7 @@ export class CartPage {
                 });
 
                 await Promise.all(cartItemPromises);
-                const cartItems = this.cart.getComparisonData();
+                const cartItems = this.cart.getItems();
                 if (cartItems.length > 0) {
                     this.updateCartComparisons(cartItems);
                 }
@@ -65,7 +66,7 @@ export class CartPage {
         }
     }
 
-    private updateCartComparisons(cartItems: any[]): void {
+    private updateCartComparisons(cartItems: ProductItem[]): void {
         const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
         cartItemElements.forEach((itemElement) => {
             const productId = (itemElement.querySelector('.cart-ingka-link') as HTMLAnchorElement).href.split('-').pop() || '';

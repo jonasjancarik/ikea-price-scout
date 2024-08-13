@@ -45,7 +45,7 @@ export class CartPage {
                     await this.cart.addItem(productName, productId, localPrice, quantity);
                 });
                 await Promise.all(cartItemPromises);
-                const cartItems = this.cart.getComparisonData();
+                const cartItems = this.cart.getItems();
                 if (cartItems.length > 0) {
                     this.updateCartComparisons(cartItems);
                 }

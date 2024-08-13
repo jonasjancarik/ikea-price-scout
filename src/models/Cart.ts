@@ -39,16 +39,16 @@ export class Cart {
     }
 
     getTotalPrice(): number {
-        return this.getItems().reduce((total, item) => total + item.getTotalPrice(), 0);
+        return this.getItems().reduce((total, item) => total + item.localPriceForQuantity, 0);
     }
 
-    getComparisonData() {
-        return this.getItems().map(item => ({
-            id: item.id,
-            productName: item.productName,
-            quantity: item.quantity,
-            localPriceForQuantity: item.getTotalPrice(),
-            otherCountries: item.getComparisonDataForQuantity()
-        }));
-    }
+    // getComparisonData() {
+    //     return this.getItems().map(item => ({
+    //         id: item.id,
+    //         productName: item.productName,
+    //         quantity: item.quantity,
+    //         localPriceForQuantity: item.getTotalPrice(),
+    //         otherCountries: item.getComparisonDataForQuantity()
+    //     }));
+    // }
 }

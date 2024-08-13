@@ -19,7 +19,9 @@ export const IkeaProductPage = {
             const productName = productNameElement?.textContent?.trim() || '';
             if (productName && productId && localPrice) {
                 const productItem = await new ProductItem(productName, productId, localPrice, 1);
-                DisplayUtils.displayProductComparison(productItem);
+                const comparisonHTML = DisplayUtils.generateComparisonHTML(productItem);
+                const comparisonDiv = DisplayUtils.createComparisonDiv(comparisonHTML);
+                IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
             }
         }
         catch (error) {

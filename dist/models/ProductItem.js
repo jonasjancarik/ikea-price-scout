@@ -4,6 +4,7 @@ export class ProductItem {
         this.productName = '';
         this.id = '';
         this.localPricePerItem = 0;
+        this.localPriceForQuantity = 0;
         this.quantity = 1;
         this.url = '';
         this.otherCountries = [];
@@ -12,6 +13,7 @@ export class ProductItem {
             this.id = id;
             this.localPricePerItem = localPrice;
             this.quantity = quantity;
+            this.localPriceForQuantity = localPrice * quantity;
             this.url = `https://www.ikea.com/cz/cs/p/-${this.id}`;
             await this.fetchAndCalculateOtherCountries();
             return this;
@@ -38,6 +40,7 @@ export class ProductItem {
             throw new Error('Quantity must be a non-negative integer');
         }
         this.quantity = newQuantity;
+        this.localPriceForQuantity = this.localPricePerItem * this.quantity;
         this.updateOtherCountriesTotalPrices();
     }
     updateOtherCountriesTotalPrices() {
@@ -47,9 +50,6 @@ export class ProductItem {
                 ? country.priceDiff.convertedPrice * this.quantity
                 : null
         }));
-    }
-    getTotalPrice() {
-        return this.localPricePerItem * this.quantity;
     }
     getComparisonDataForQuantity() {
         return this.otherCountries.map(country => ({

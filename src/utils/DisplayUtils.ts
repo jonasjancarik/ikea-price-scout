@@ -1,16 +1,6 @@
-// IkeaDisplayUtils.ts
-
 import { IkeaPriceUtils } from './PriceUtils.js';
 import { IkeaDomUtils } from './DomUtils.js';
 import { ProductItem } from '../models/ProductItem.js';
-
-interface CartItem {  // todo: should consolidate with ProductItem - if the only difference is that it has the localPriceForQuantity property
-    localPriceForQuantity: number;
-    otherCountries: any[];
-    quantity: number;
-    productName: string;
-    url?: string;
-}
 
 interface SavingsResult {
     totalSavings: { [country: string]: number };
@@ -29,7 +19,6 @@ interface OptimalPurchaseItem {
 }
 
 export const DisplayUtils = {
-
     insertSummaryDiv(summaryHTML: string) {
         console.log("Inserting summary div");
         let summaryDiv = document.getElementById('ikea-price-comparison-summary');
@@ -54,7 +43,7 @@ export const DisplayUtils = {
         insertAttempt();
     },
 
-    updateCartSummary(cartItems: CartItem[]): string {
+    updateCartSummary(cartItems: ProductItem[]): string {
         console.log("Updating cart summary");
         const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
         const summaryHTML = this.generateSummaryHTML(totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy);
@@ -64,13 +53,7 @@ export const DisplayUtils = {
         return summaryHTML;
     },
 
-    displayProductComparison(product: ProductItem) {  // currently used on the product page only
-        const comparisonHTML = this.generateComparisonHTML(product);
-        const comparisonDiv = this.createComparisonDiv(comparisonHTML);
-        IkeaDomUtils.insertAfterElement('.pip-temp-price-module__addons', comparisonDiv);
-    },
-
-    generateComparisonHTML(item: CartItem | ProductItem): string {
+    generateComparisonHTML(item: ProductItem): string {
         let html = item.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${item.quantity} ks v jiných zemích:</strong><br><br>`;
         item.otherCountries.forEach((result: any) => {
             if (result.isAvailable) {
@@ -91,19 +74,16 @@ export const DisplayUtils = {
         return div;
     },
 
-    calculateSavings(cartItems: CartItem[]): SavingsResult {
-        let totalLocalPrice = 0;
+    calculateSavings(cartItems: ProductItem[]): SavingsResult {
         let totalSavings: { [country: string]: number } = {};
         let optimalSavings = 0;
         let unavailableCounts: { [country: string]: number } = {};
         let optimalPurchaseStrategy: OptimalPurchaseItem[] = [];
 
         cartItems.forEach(item => {
-            totalLocalPrice += item.localPriceForQuantity;
-
             let cheapestPrice = item.localPriceForQuantity;
             let cheapestCountry = 'Česko';
-            let cheapestUrl = item.url ?? '';
+            let cheapestUrl = item.url;
 
             item.otherCountries.forEach((result: any) => {
                 if (!unavailableCounts[result.name]) {
@@ -118,9 +98,7 @@ export const DisplayUtils = {
                 if (!totalSavings[result.name]) {
                     totalSavings[result.name] = 0;
                 }
-                // if (result.totalPrice < item.localPriceForQuantity) {
-                    // totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
-                // }  // todo: we are calculating the total difference - think about how to present this clearly in the UI (maybe they are interested in buying only the cheaper ones in that country and want to see clearly how much they save)
+
                 totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
 
                 if (result.totalPrice < cheapestPrice) {
