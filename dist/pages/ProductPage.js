@@ -2,6 +2,7 @@ import { ProductItem } from '../models/ProductItem.js';
 import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
 import { Selectors } from '../selectors/selectors.js';
+import { ErrorUtils } from '../utils/ErrorUtils.js';
 export const IkeaProductPage = {
     async compareProductPrice(retryCount = 0) {
         try {
@@ -28,7 +29,13 @@ export const IkeaProductPage = {
             }
         }
         catch (error) {
-            IkeaDomUtils.handleComparisonError(error, retryCount, this.compareProductPrice);
+            if (retryCount < 3) {
+                console.log(`Retrying (${retryCount + 1}/3)...`);
+                setTimeout(() => this.compareProductPrice(retryCount + 1), 2000);
+            }
+            else {
+                ErrorUtils.handleError(error, 'ProductPage.compareProductPrice', 'Nepodařilo se načíst srovnání cen. Zkuste obnovit stránku.');
+            }
         }
     }
 };

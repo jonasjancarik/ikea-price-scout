@@ -11,6 +11,7 @@
         DisplayUtils: chrome.runtime.getURL('utils/DisplayUtils.js'),
         DomUtils: chrome.runtime.getURL('utils/DomUtils.js'),
         PriceUtils: chrome.runtime.getURL('utils/PriceUtils.js'),
+        ErrorUtils: chrome.runtime.getURL('utils/ErrorUtils.js'),
     };
 
     const main = await import(moduleUrls.main);

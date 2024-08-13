@@ -4,6 +4,7 @@ import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
 import { Selectors } from '../selectors/selectors.js';
 import { IkeaPriceUtils } from '../utils/PriceUtils.js';
+import { ErrorUtils } from '../utils/ErrorUtils.js';
 
 export class CartPage {
     private cart: Cart | null = null;
@@ -15,9 +16,17 @@ export class CartPage {
     private lastWidth: number = 0;
 
     async initialize(): Promise<void> {
-        await this.compareCartPrices(); // Initial comparison
-        this.setupCartObserver();
-        this.attachCartEventListeners();
+        try {
+            await this.compareCartPrices(); // Initial comparison
+            this.setupCartObserver();
+            this.attachCartEventListeners();
+        } catch (error) {
+            ErrorUtils.handleError(
+                error as Error,
+                'CartPage.initialize',
+                'Nepodařilo se inicializovat porovnání cen v košíku. Zkuste obnovit stránku.'
+            );
+        }
     }
 
     private async compareCartPrices(): Promise<void> {
@@ -50,7 +59,11 @@ export class CartPage {
                 }
                 this.lastCartState = currentCartState;
             } catch (error) {
-                console.error("Error in compareCartPrices:", error);
+                ErrorUtils.handleError(
+                    error as Error,
+                    'CartPage.compareCartPrices',
+                    'Nastala chyba při porovnávání cen v košíku. Zkuste obnovit stránku.'
+                );
                 this.hideAllLoadingIndicators();
             }
         } else {
@@ -207,80 +220,88 @@ export class CartPage {
     }
 
     private setupCartObserver(): void {
-        let cartMutationCount = 0;
+        try {
+            let cartMutationCount = 0;
 
-        console.log("Setting up cart observer");
-        this.cartObserver = new MutationObserver(this.debounce(() => {
-            console.log("Cart mutation observed");
-            if (cartMutationCount === 0) {
-                this.compareCartPrices();
-            }
-            cartMutationCount += 1;
-        }, 50));
+            console.log("Setting up cart observer");
+            this.cartObserver = new MutationObserver(this.debounce(() => {
+                console.log("Cart mutation observed");
+                if (cartMutationCount === 0) {
+                    this.compareCartPrices();
+                }
+                cartMutationCount += 1;
+            }, 50));
 
-        const attachObserver = (): boolean => {
-            const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
-            const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
-            const cartContainer = desktopContainer || mobileContainer;
+            const attachObserver = (): boolean => {
+                const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
+                const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
+                const cartContainer = desktopContainer || mobileContainer;
 
-            if (cartContainer) {
-                this.cartObserver?.observe(cartContainer, { childList: true, subtree: true });
-                console.log("Cart observer attached to", desktopContainer ? "desktop" : "mobile", "container");
-                return true;
-            }
-            console.log("Cart container not found, will retry");
-            return false;
-        };
+                if (cartContainer) {
+                    this.cartObserver?.observe(cartContainer, { childList: true, subtree: true });
+                    console.log("Cart observer attached to", desktopContainer ? "desktop" : "mobile", "container");
+                    return true;
+                }
+                console.log("Cart container not found, will retry");
+                return false;
+            };
 
-        const attemptAttachment = (retries: number = 0, maxRetries: number = 20): void => {
-            if (attachObserver()) return;
-            if (retries < maxRetries) {
-                setTimeout(() => attemptAttachment(retries + 1), 500);
-            } else {
-                console.error("Failed to attach cart observer after maximum retries");
-            }
-        };
-
-        attemptAttachment();
-
-        const handleResize = this.debounce(() => {
-            console.log("Significant resize detected, checking if reattachment is necessary");
-            const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
-            const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
-            const currentContainer = desktopContainer || mobileContainer;
-
-            if (currentContainer && !currentContainer.contains(this.cartObserver?.takeRecords()[0]?.target as Node)) {
-                console.log("Cart container changed, reattaching observer");
-                this.cartObserver?.disconnect();
-                this.cartObserver?.observe(currentContainer, { childList: true, subtree: true });
-            }
-
-            this.reapplyStoredComparisons();
-        }, 250);
-
-        this.resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-                if (!this.entriesSeen.has(entry.target as Element)) {
-                    this.entriesSeen.add(entry.target as Element);
-                    this.lastWidth = entry.contentRect.width;
+            const attemptAttachment = (retries: number = 0, maxRetries: number = 20): void => {
+                if (attachObserver()) return;
+                if (retries < maxRetries) {
+                    setTimeout(() => attemptAttachment(retries + 1), 500);
                 } else {
-                    const widthDiff = Math.abs(entry.contentRect.width - this.lastWidth);
-                    if (widthDiff > 50) {
+                    console.error("Failed to attach cart observer after maximum retries");
+                }
+            };
+
+            attemptAttachment();
+
+            const handleResize = this.debounce(() => {
+                console.log("Significant resize detected, checking if reattachment is necessary");
+                const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
+                const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
+                const currentContainer = desktopContainer || mobileContainer;
+
+                if (currentContainer && !currentContainer.contains(this.cartObserver?.takeRecords()[0]?.target as Node)) {
+                    console.log("Cart container changed, reattaching observer");
+                    this.cartObserver?.disconnect();
+                    this.cartObserver?.observe(currentContainer, { childList: true, subtree: true });
+                }
+
+                this.reapplyStoredComparisons();
+            }, 250);
+
+            this.resizeObserver = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (!this.entriesSeen.has(entry.target as Element)) {
+                        this.entriesSeen.add(entry.target as Element);
                         this.lastWidth = entry.contentRect.width;
-                        handleResize();
+                    } else {
+                        const widthDiff = Math.abs(entry.contentRect.width - this.lastWidth);
+                        if (widthDiff > 50) {
+                            this.lastWidth = entry.contentRect.width;
+                            handleResize();
+                        }
                     }
                 }
+            });
+
+            const cartContainer = document.querySelector(Selectors.cartContainer.desktop) ||
+                document.querySelector(Selectors.cartContainer.mobile);
+
+            if (cartContainer) {
+                this.resizeObserver.observe(cartContainer);
+                console.log("ResizeObserver attached to cart container");
+            } else {
+                console.error("Cart container not found for ResizeObserver");
             }
-        });
-
-        const cartContainer = document.querySelector(Selectors.cartContainer.desktop) ||
-            document.querySelector(Selectors.cartContainer.mobile);
-
-        if (cartContainer) {
-            this.resizeObserver.observe(cartContainer);
-            console.log("ResizeObserver attached to cart container");
-        } else {
-            console.error("Cart container not found for ResizeObserver");
+        } catch (error) {
+            ErrorUtils.handleError(
+                error as Error,
+                'CartPage.setupCartObserver',
+                'Nepodařilo se nastavit sledování změn v košíku. Některé funkce nemusí fungovat správně.'
+            );
         }
     }
 
