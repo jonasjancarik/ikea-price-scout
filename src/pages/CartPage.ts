@@ -33,7 +33,14 @@ export class CartPage {
                     if (!localPriceElement) {
                         throw new Error('Local price element not found');
                     }
-                    const localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__addons .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+
+                    let localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__addons .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+                    
+                    // check if the displayed price is the discounted price - in that case, use the other price field
+                    if (itemElement.querySelector('.cart-ingka-price-module__addon')?.textContent?.includes('Původní cena')) {
+                        localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__primary-currency-price .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+                    }
+                    
                     const quantityInput = itemElement.querySelector('.cart-ingka-quantity-stepper__input') as HTMLInputElement;
                     const quantity = parseInt(quantityInput.value);
                     const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
