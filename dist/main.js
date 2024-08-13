@@ -9,6 +9,12 @@ export default async function initializeExtension(moduleUrls) {
     ]);
     let cartPage = null;
     async function initializeExtension() {
+        console.log("Checking if extension should be initialized");
+        const { selectedCountries } = await chrome.storage.sync.get(['selectedCountries']);
+        if (!selectedCountries || selectedCountries.length === 0) {
+            console.log("No countries selected. Extension will not run.");
+            return;
+        }
         console.log("Initializing extension");
         await ExchangeRates.getExchangeRates();
         if (isProductPage()) {

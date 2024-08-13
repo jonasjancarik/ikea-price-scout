@@ -6,6 +6,20 @@ interface ExchangeRates {
 
 let exchangeRates: ExchangeRates = {};
 
+chrome.runtime.onInstalled.addListener(function (details) {
+    if (details.reason === "install" || details.reason === "update") {
+        // Set default countries
+        const defaultCountries = ['pl', 'de', 'at', 'sk'];
+        chrome.storage.sync.get(['selectedCountries'], function (result) {
+            if (!result.selectedCountries || result.selectedCountries.length === 0) {
+                chrome.storage.sync.set({ selectedCountries: defaultCountries }, function () {
+                    console.log('Default countries set on installation/update');
+                });
+            }
+        });
+    }
+});
+
 // Function to fetch exchange rates from the API
 async function fetchExchangeRates(): Promise<ExchangeRates> {
     const url = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';

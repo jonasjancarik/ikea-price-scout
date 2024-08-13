@@ -1,4 +1,4 @@
-import { IkeaPriceUtils } from '../utils/PriceUtils.js'; // Adjust the import path as necessary
+import { IkeaPriceUtils } from '../utils/PriceUtils.js';
 export class ProductItem {
     constructor(productName, id, localPrice, quantity = 1) {
         this.productName = '';
@@ -20,8 +20,11 @@ export class ProductItem {
         })();
     }
     async fetchAndCalculateOtherCountries() {
+        const { selectedCountries } = await chrome.storage.sync.get(['selectedCountries']);
         const otherCountryDetails = await IkeaPriceUtils.fetchForeignPrices(this.id);
-        this.otherCountries = await Promise.all(otherCountryDetails.map(async (details) => {
+        this.otherCountries = await Promise.all(otherCountryDetails
+            .filter(details => selectedCountries ? selectedCountries.includes(details.country) : true)
+            .map(async (details) => {
             const priceDiff = details.isAvailable
                 ? await IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
                 : { convertedPrice: null, percentageDiff: null };
@@ -32,6 +35,7 @@ export class ProductItem {
                 ...details,
                 priceDiff,
                 totalPrice,
+                pricePerItem: priceDiff.convertedPrice
             };
         }));
     }
@@ -47,14 +51,14 @@ export class ProductItem {
         this.otherCountries = this.otherCountries.map(country => ({
             ...country,
             totalPrice: country.isAvailable
-                ? country.priceDiff.convertedPrice * this.quantity
+                ? country.pricePerItem * this.quantity
                 : null
         }));
     }
     getComparisonDataForQuantity() {
         return this.otherCountries.map(country => ({
             ...country,
-            price: country.totalPrice !== null ? country.totalPrice.toFixed(2) : null
+            price: country.totalPrice !== null ? country.totalPrice : null
         }));
     }
 }

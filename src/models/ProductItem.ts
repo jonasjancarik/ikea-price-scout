@@ -1,4 +1,4 @@
-import { IkeaPriceUtils } from '../utils/PriceUtils.js'; // Adjust the import path as necessary
+import { IkeaPriceUtils } from '../utils/PriceUtils.js';
 
 export class ProductItem {
     productName: string = '';
@@ -23,22 +23,26 @@ export class ProductItem {
     }
 
     async fetchAndCalculateOtherCountries() {
+        const { selectedCountries } = await chrome.storage.sync.get(['selectedCountries']);
         const otherCountryDetails = await IkeaPriceUtils.fetchForeignPrices(this.id);
-        this.otherCountries = await Promise.all(otherCountryDetails.map(async (details) => {
-            const priceDiff = details.isAvailable
-                ? await IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
-                : { convertedPrice: null, percentageDiff: null };
+        this.otherCountries = await Promise.all(otherCountryDetails
+            .filter(details => selectedCountries ? selectedCountries.includes(details.country) : true)
+            .map(async (details) => {
+                const priceDiff = details.isAvailable
+                    ? await IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)
+                    : { convertedPrice: null, percentageDiff: null };
 
-            const totalPrice = details.isAvailable && priceDiff.convertedPrice
-                ? priceDiff.convertedPrice * this.quantity
-                : null;
+                const totalPrice = details.isAvailable && priceDiff.convertedPrice
+                    ? priceDiff.convertedPrice * this.quantity
+                    : null;
 
-            return {
-                ...details,
-                priceDiff,
-                totalPrice,
-            };
-        }));        
+                return {
+                    ...details,
+                    priceDiff,
+                    totalPrice,
+                    pricePerItem: priceDiff.convertedPrice
+                };
+            }));
     }
 
     setQuantity(newQuantity: number) {
@@ -54,7 +58,7 @@ export class ProductItem {
         this.otherCountries = this.otherCountries.map(country => ({
             ...country,
             totalPrice: country.isAvailable
-                ? country.priceDiff.convertedPrice * this.quantity
+                ? country.pricePerItem * this.quantity
                 : null
         }));
     }
@@ -62,7 +66,7 @@ export class ProductItem {
     getComparisonDataForQuantity() {
         return this.otherCountries.map(country => ({
             ...country,
-            price: country.totalPrice !== null ? country.totalPrice.toFixed(2) : null
+            price: country.totalPrice !== null ? country.totalPrice : null
         }));
     }
 }
