@@ -1,6 +1,7 @@
 import { Cart } from '../models/Cart.js';
 import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
+import { Selectors } from '../selectors/selectors.js';
 export class CartPage {
     constructor() {
         this.cart = null;
@@ -25,22 +26,22 @@ export class CartPage {
             console.log("Cart state changed or initial load, updating comparisons");
             try {
                 this.cart = new Cart();
-                const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+                const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
-                    const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop() || '';
-                    const localPriceElement = itemElement.querySelector('.cart-ingka-price__sr-text');
+                    const productId = itemElement.querySelector(Selectors.cartPage.productLink).href.split('-').pop() || '';
+                    const localPriceElement = itemElement.querySelector(Selectors.cartPage.priceElement);
                     if (!localPriceElement) {
                         throw new Error('Local price element not found');
                     }
-                    let localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__addons .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+                    let localPrice = parseFloat(itemElement.querySelector(Selectors.cartPage.priceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
                     // check if the displayed price is the discounted price - in that case, use the other price field
-                    if (itemElement.querySelector('.cart-ingka-price-module__addon')?.textContent?.includes('Původní cena')) {
-                        localPrice = parseFloat(itemElement.querySelector('.cart-ingka-price-module__primary-currency-price .cart-ingka-price__integer')?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+                    if (itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+                        localPrice = parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
                     }
-                    const quantityInput = itemElement.querySelector('.cart-ingka-quantity-stepper__input');
+                    const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput);
                     const quantity = parseInt(quantityInput.value);
-                    const nameElement = itemElement.querySelector('.cart-ingka-price-module__name-decorator');
-                    const descriptionElement = itemElement.querySelector('.cart-ingka-price-module__description');
+                    const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
+                    const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
                     const productName = `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
                     await this.cart.addItem(productName, productId, localPrice, quantity);
                 });
@@ -61,17 +62,17 @@ export class CartPage {
         }
     }
     updateCartComparisons(cartItems) {
-        const cartItemElements = document.querySelectorAll('.product_product__pvcUf');
+        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
         cartItemElements.forEach((itemElement) => {
-            const productId = itemElement.querySelector('.cart-ingka-link').href.split('-').pop() || '';
+            const productId = itemElement.querySelector(Selectors.cartPage.productLink).href.split('-').pop() || '';
             const cartItem = cartItems.find(item => item.id === productId);
             if (cartItem) {
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(cartItem);
-                let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
                 if (!comparisonDiv) {
                     comparisonDiv = DisplayUtils.createComparisonDiv(comparisonHTML);
                     comparisonDiv.classList.add('ikea-price-comparison');
-                    IkeaDomUtils.insertAfterElement('.cart-ingka-price-module__primary-currency-price', comparisonDiv, itemElement);
+                    IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement);
                 }
                 else {
                     comparisonDiv.innerHTML = comparisonHTML;
@@ -83,12 +84,12 @@ export class CartPage {
         this.storedComparisons.set('cartSummary', summaryHTML);
     }
     reapplyStoredComparisons() {
-        const cartItems = document.querySelectorAll('.product_product__pvcUf');
+        const cartItems = document.querySelectorAll(Selectors.cartPage.cartItem);
         cartItems.forEach(itemElement => {
             const productId = itemElement.getAttribute('data-product-id') || '';
             const storedComparison = this.storedComparisons.get(productId);
             if (storedComparison) {
-                let comparisonDiv = itemElement.querySelector('.ikea-price-comparison');
+                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
                 if (!comparisonDiv) {
                     itemElement.insertAdjacentHTML('beforeend', storedComparison);
                 }
@@ -96,18 +97,18 @@ export class CartPage {
         });
         const storedSummary = this.storedComparisons.get('cartSummary');
         if (storedSummary) {
-            let summaryDiv = document.getElementById('ikea-price-comparison-summary');
+            let summaryDiv = document.getElementById(Selectors.summary.container);
             if (!summaryDiv) {
                 DisplayUtils.insertSummaryDiv(storedSummary);
             }
         }
     }
     getCartState() {
-        const cartItems = document.querySelectorAll('.product_product__pvcUf');
+        const cartItems = document.querySelectorAll(Selectors.cartPage.cartItem);
         console.log("Found", cartItems.length, "cart items");
         const state = Array.from(cartItems).map(item => {
             const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid')?.split('_').pop() : '';
-            const quantityInput = item.querySelector('.cart-ingka-quantity-stepper__input');
+            const quantityInput = item.querySelector(Selectors.cartPage.quantityInput);
             const quantity = quantityInput ? quantityInput.value : '1';
             console.log("Cart item:", id, "Quantity:", quantity);
             return `${id}:${quantity}`;
@@ -119,14 +120,14 @@ export class CartPage {
         console.log("Setting up cart observer");
         this.cartObserver = new MutationObserver(this.debounce(() => {
             console.log("Cart mutation observed");
-            if (cartMutationCount === 0) { // TODO: This is a bit of a hack, but it works - the mutation observer is only needed once to detect that the cart has been added to the DOM
+            if (cartMutationCount === 0) {
                 this.compareCartPrices();
             }
             cartMutationCount += 1;
         }, 50));
         const attachObserver = () => {
-            const desktopContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V');
-            const mobileContainer = document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
+            const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
+            const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
             const cartContainer = desktopContainer || mobileContainer;
             if (cartContainer) {
                 this.cartObserver?.observe(cartContainer, { childList: true, subtree: true });
@@ -149,8 +150,8 @@ export class CartPage {
         attemptAttachment();
         const handleResize = this.debounce(() => {
             console.log("Significant resize detected, checking if reattachment is necessary");
-            const desktopContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V');
-            const mobileContainer = document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
+            const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
+            const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
             const currentContainer = desktopContainer || mobileContainer;
             if (currentContainer && !currentContainer.contains(this.cartObserver?.takeRecords()[0]?.target)) {
                 console.log("Cart container changed, reattaching observer");
@@ -167,16 +168,15 @@ export class CartPage {
                 }
                 else {
                     const widthDiff = Math.abs(entry.contentRect.width - this.lastWidth);
-                    if (widthDiff > 50) { // Only trigger for significant width changes
+                    if (widthDiff > 50) {
                         this.lastWidth = entry.contentRect.width;
                         handleResize();
                     }
                 }
             }
         });
-        // Explicitly observe the element that contains the cart
-        const cartContainer = document.querySelector('.shoppingBag_desktop_contentGrid__RPQ4V') ||
-            document.querySelector('.shoppingBag_mobile_contentGrid__wLMZ7');
+        const cartContainer = document.querySelector(Selectors.cartContainer.desktop) ||
+            document.querySelector(Selectors.cartContainer.mobile);
         if (cartContainer) {
             this.resizeObserver.observe(cartContainer);
             console.log("ResizeObserver attached to cart container");
@@ -189,20 +189,18 @@ export class CartPage {
         console.log("Attaching cart event listeners");
         document.addEventListener('click', (event) => {
             const target = event.target;
-            if (target.parentElement?.matches('.cart-ingka-quantity-stepper__decrease, .cart-ingka-quantity-stepper__increase')) {
-                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
-                const quantityInput = target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-quantity-stepper__input');
+            if (target.parentElement?.matches(`${Selectors.cartPage.quantityDecrease}, ${Selectors.cartPage.quantityIncrease}`)) {
+                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
+                const quantityInput = target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.quantityInput);
                 const newQuantity = parseInt(quantityInput.value);
-                // this.cart?.updateItemQuantity(productId, newQuantity);
                 this.compareCartPrices();
             }
         });
         document.addEventListener('input', this.debounce((event) => {
             const target = event.target;
-            if (target.matches('.cart-ingka-quantity-stepper__input')) {
-                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
+            if (target.matches(Selectors.cartPage.quantityInput)) {
+                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
                 const newQuantity = parseInt(target.value);
-                // this.cart?.updateItemQuantity(productId, newQuantity);
                 this.compareCartPrices();
             }
         }, 250));
@@ -211,7 +209,7 @@ export class CartPage {
             const parentElement = target?.parentElement;
             const dataTestIdAttr = parentElement?.attributes.getNamedItem('data-testid');
             if (dataTestIdAttr && dataTestIdAttr.value.startsWith('remove')) {
-                const productId = (target.closest('.product_product__pvcUf')?.querySelector('.cart-ingka-link')).href.split('-').pop() || null;
+                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
                 if (productId) {
                     this.cart?.removeItem(productId);
                     setTimeout(() => this.compareCartPrices(), 250);
