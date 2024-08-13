@@ -15,7 +15,7 @@ export class CartPage {
     private lastWidth: number = 0;
 
     async initialize(): Promise<void> {
-        await this.compareCartPrices(); // Immediate initial comparison
+        await this.compareCartPrices(); // Initial comparison
         this.setupCartObserver();
         this.attachCartEventListeners();
     }
@@ -31,35 +31,14 @@ export class CartPage {
                 this.cart = new Cart();
                 const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
 
-                // Hide previous comparisons and show loading indicators for all cart items
                 this.updateLoadingState(cartItemElements, true);
-
-                // Show loading indicator for summary
                 this.showSummaryLoadingIndicator();
 
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
                     const productId = (itemElement.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || '';
-                    const localPriceElement = itemElement.querySelector(Selectors.cartPage.priceElement);
-                    if (!localPriceElement) {
-                        throw new Error('Local price element not found');
-                    }
-
-                    const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger); // that element is present only if the quantity is greater than 1
-                    let localPrice: number | null = null;
-
-                    if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
-                        // if either the integer element is not present or the displayed price is the discounted price, use the other price field
-                        localPrice = parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
-                    } else {
-                        // if the integer element is present, use it
-                        localPrice = parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
-                    }
-
-                    const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
-                    const quantity = parseInt(quantityInput.value);
-                    const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
-                    const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
-                    const productName = `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
+                    const localPrice = this.getLocalPrice(itemElement);
+                    const quantity = this.getQuantity(itemElement);
+                    const productName = this.getProductName(itemElement);
 
                     await this.cart!.addItem(productName, productId, localPrice, quantity);
                 });
@@ -79,6 +58,55 @@ export class CartPage {
             this.reapplyStoredComparisons();
         }
     }
+
+    private getLocalPrice(itemElement: Element): number {
+        const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger);
+        if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+            return parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+        } else {
+            return parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+        }
+    }
+
+    private getQuantity(itemElement: Element): number {
+        const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
+        return parseInt(quantityInput.value);
+    }
+
+    private getProductName(itemElement: Element): string {
+        const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
+        const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
+        return `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
+    }
+
+    private updateQuantity(productId: string, newQuantity: number): void {
+        const cartItem = this.cart?.getItems().find(item => item.id === productId);
+        if (cartItem) {
+            cartItem.setQuantity(newQuantity);
+            this.updateItemComparison(cartItem);
+            this.updateCartSummary();
+        }
+    }
+    
+    private updateItemComparison(item: ProductItem): void {
+        const itemElement = document.querySelector(`${Selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(Selectors.cartPage.cartItem);
+        if (itemElement) {
+            const comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison) as HTMLElement;
+            if (comparisonDiv) {
+                const contentWrapper = comparisonDiv.querySelector('.comparison-content') as HTMLElement;
+                const comparisonHTML = DisplayUtils.generateComparisonHTML(item);
+                contentWrapper.innerHTML = comparisonHTML;
+                this.storedComparisons.set(item.id, comparisonDiv.outerHTML);
+            }
+        }
+    }
+
+    private updateCartSummary(): void {
+        const cartItems = this.cart?.getItems() || [];
+        const summaryHTML = this.generateCartSummaryHTML(cartItems);
+        this.insertSummaryDiv(summaryHTML);
+        this.storedComparisons.set('cartSummary', summaryHTML);
+    }    
 
     private updateLoadingState(cartItemElements: NodeListOf<Element>, isLoading: boolean): void {
         cartItemElements.forEach((itemElement) => {
@@ -204,7 +232,7 @@ export class CartPage {
             return false;
         };
 
-        const attemptAttachment = (retries: number = 0, maxRetries: number = 10): void => {
+        const attemptAttachment = (retries: number = 0, maxRetries: number = 20): void => {
             if (attachObserver()) return;
             if (retries < maxRetries) {
                 setTimeout(() => attemptAttachment(retries + 1), 500);
@@ -265,7 +293,9 @@ export class CartPage {
                 const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
                 const quantityInput = target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
                 const newQuantity = parseInt(quantityInput.value);
-                this.compareCartPrices();
+                if (productId) {
+                    this.updateQuantity(productId, newQuantity);
+                }
             }
         });
 
@@ -274,7 +304,9 @@ export class CartPage {
             if (target.matches(Selectors.cartPage.quantityInput)) {
                 const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
                 const newQuantity = parseInt((target as HTMLInputElement).value);
-                this.compareCartPrices();
+                if (productId) {
+                    this.updateQuantity(productId, newQuantity);
+                }
             }
         }, 250));
 

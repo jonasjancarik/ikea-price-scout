@@ -14,7 +14,7 @@ export class CartPage {
         this.lastWidth = 0;
     }
     async initialize() {
-        await this.compareCartPrices(); // Immediate initial comparison
+        await this.compareCartPrices(); // Initial comparison
         this.setupCartObserver();
         this.attachCartEventListeners();
     }
@@ -28,31 +28,13 @@ export class CartPage {
             try {
                 this.cart = new Cart();
                 const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
-                // Hide previous comparisons and show loading indicators for all cart items
                 this.updateLoadingState(cartItemElements, true);
-                // Show loading indicator for summary
                 this.showSummaryLoadingIndicator();
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
                     const productId = itemElement.querySelector(Selectors.cartPage.productLink).href.split('-').pop() || '';
-                    const localPriceElement = itemElement.querySelector(Selectors.cartPage.priceElement);
-                    if (!localPriceElement) {
-                        throw new Error('Local price element not found');
-                    }
-                    const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger); // that element is present only if the quantity is greater than 1
-                    let localPrice = null;
-                    if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
-                        // if either the integer element is not present or the displayed price is the discounted price, use the other price field
-                        localPrice = parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
-                    }
-                    else {
-                        // if the integer element is present, use it
-                        localPrice = parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
-                    }
-                    const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput);
-                    const quantity = parseInt(quantityInput.value);
-                    const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
-                    const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
-                    const productName = `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
+                    const localPrice = this.getLocalPrice(itemElement);
+                    const quantity = this.getQuantity(itemElement);
+                    const productName = this.getProductName(itemElement);
                     await this.cart.addItem(productName, productId, localPrice, quantity);
                 });
                 await Promise.all(cartItemPromises);
@@ -71,6 +53,50 @@ export class CartPage {
             console.log("Cart state unchanged, reapplying stored comparisons");
             this.reapplyStoredComparisons();
         }
+    }
+    getLocalPrice(itemElement) {
+        const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger);
+        if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+            return parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+        }
+        else {
+            return parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+        }
+    }
+    getQuantity(itemElement) {
+        const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput);
+        return parseInt(quantityInput.value);
+    }
+    getProductName(itemElement) {
+        const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
+        const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
+        return `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
+    }
+    updateQuantity(productId, newQuantity) {
+        const cartItem = this.cart?.getItems().find(item => item.id === productId);
+        if (cartItem) {
+            cartItem.setQuantity(newQuantity);
+            this.updateItemComparison(cartItem);
+            this.updateCartSummary();
+        }
+    }
+    updateItemComparison(item) {
+        const itemElement = document.querySelector(`${Selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(Selectors.cartPage.cartItem);
+        if (itemElement) {
+            const comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+            if (comparisonDiv) {
+                const contentWrapper = comparisonDiv.querySelector('.comparison-content');
+                const comparisonHTML = DisplayUtils.generateComparisonHTML(item);
+                contentWrapper.innerHTML = comparisonHTML;
+                this.storedComparisons.set(item.id, comparisonDiv.outerHTML);
+            }
+        }
+    }
+    updateCartSummary() {
+        const cartItems = this.cart?.getItems() || [];
+        const summaryHTML = this.generateCartSummaryHTML(cartItems);
+        this.insertSummaryDiv(summaryHTML);
+        this.storedComparisons.set('cartSummary', summaryHTML);
     }
     updateLoadingState(cartItemElements, isLoading) {
         cartItemElements.forEach((itemElement) => {
@@ -179,7 +205,7 @@ export class CartPage {
             console.log("Cart container not found, will retry");
             return false;
         };
-        const attemptAttachment = (retries = 0, maxRetries = 10) => {
+        const attemptAttachment = (retries = 0, maxRetries = 20) => {
             if (attachObserver())
                 return;
             if (retries < maxRetries) {
@@ -235,7 +261,9 @@ export class CartPage {
                 const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
                 const quantityInput = target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.quantityInput);
                 const newQuantity = parseInt(quantityInput.value);
-                this.compareCartPrices();
+                if (productId) {
+                    this.updateQuantity(productId, newQuantity);
+                }
             }
         });
         document.addEventListener('input', this.debounce((event) => {
@@ -243,7 +271,9 @@ export class CartPage {
             if (target.matches(Selectors.cartPage.quantityInput)) {
                 const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
                 const newQuantity = parseInt(target.value);
-                this.compareCartPrices();
+                if (productId) {
+                    this.updateQuantity(productId, newQuantity);
+                }
             }
         }, 250));
         document.addEventListener('click', (event) => {
