@@ -27,13 +27,6 @@ export const DisplayUtils = {
         return IkeaPriceUtils.formatPrice(price);
     },
 
-    createLoadingIndicator(): HTMLDivElement {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.style.cssText = 'display: flex; justify-content: center; align-items: center; padding: 20px;';
-        loadingDiv.innerHTML = '<span style="font-size: 1.2em;">Načítání cen...</span>';
-        return loadingDiv;
-    },
-
     showError(message: string): HTMLDivElement {
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = 'background-color: #ffeeee; color: #ff0000; padding: 10px; margin-top: 10px; border-radius: 5px;';
@@ -65,5 +58,37 @@ export const DisplayUtils = {
         button.style.cssText = 'padding: 5px 10px; margin: 5px; border: none; border-radius: 4px; background-color: #0051ba; color: white; cursor: pointer;';
         button.addEventListener('click', onClick);
         return button;
-    }
+    },
+
+    createLoadingIndicator(): HTMLDivElement {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.classList.add('ikea-price-comparison-loading');
+        loadingDiv.style.cssText = `
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-top: 10px;
+        `;
+        loadingDiv.innerHTML = `
+            <div class="loading-spinner"></div>
+            <span style="margin-left: 10px;">Načítání cen...</span>
+        `;
+        return loadingDiv;
+    },
+
+    showLoadingIndicator(container: HTMLElement): void {
+        const loadingIndicator = this.createLoadingIndicator();
+        container.appendChild(loadingIndicator);
+    },
+
+    hideLoadingIndicator(container: HTMLElement): void {
+        const loadingIndicator = container.querySelector('.ikea-price-comparison-loading');
+        if (loadingIndicator) {
+            container.removeChild(loadingIndicator);
+        }
+    },
+
 };

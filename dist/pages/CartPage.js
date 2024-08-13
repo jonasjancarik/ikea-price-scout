@@ -28,6 +28,10 @@ export class CartPage {
             try {
                 this.cart = new Cart();
                 const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+                // Hide previous comparisons and show loading indicators for all cart items
+                this.updateLoadingState(cartItemElements, true);
+                // Show loading indicator for summary
+                this.showSummaryLoadingIndicator();
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
                     const productId = itemElement.querySelector(Selectors.cartPage.productLink).href.split('-').pop() || '';
                     const localPriceElement = itemElement.querySelector(Selectors.cartPage.priceElement);
@@ -60,12 +64,45 @@ export class CartPage {
             }
             catch (error) {
                 console.error("Error in compareCartPrices:", error);
+                this.hideAllLoadingIndicators();
             }
         }
         else {
             console.log("Cart state unchanged, reapplying stored comparisons");
             this.reapplyStoredComparisons();
         }
+    }
+    updateLoadingState(cartItemElements, isLoading) {
+        cartItemElements.forEach((itemElement) => {
+            let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+            if (!comparisonDiv) {
+                comparisonDiv = this.createComparisonDiv();
+                IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement);
+            }
+            const contentWrapper = comparisonDiv.querySelector('.comparison-content');
+            const loadingIndicator = comparisonDiv.querySelector('.loading-indicator');
+            if (isLoading) {
+                contentWrapper.style.display = 'none';
+                loadingIndicator.style.display = 'flex';
+            }
+            else {
+                contentWrapper.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+            }
+        });
+    }
+    createComparisonDiv() {
+        const comparisonDiv = document.createElement('div');
+        comparisonDiv.classList.add('ikea-price-comparison');
+        comparisonDiv.style.cssText = 'background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px;';
+        const contentWrapper = document.createElement('div');
+        contentWrapper.classList.add('comparison-content');
+        const loadingIndicator = DisplayUtils.createLoadingIndicator();
+        loadingIndicator.classList.add('loading-indicator');
+        loadingIndicator.style.display = 'none';
+        comparisonDiv.appendChild(contentWrapper);
+        comparisonDiv.appendChild(loadingIndicator);
+        return comparisonDiv;
     }
     updateCartComparisons(cartItems) {
         const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
@@ -75,17 +112,15 @@ export class CartPage {
             if (cartItem) {
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(cartItem);
                 let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
-                if (!comparisonDiv) {
-                    comparisonDiv = DisplayUtils.createComparisonDiv(comparisonHTML);
-                    comparisonDiv.classList.add('ikea-price-comparison');
-                    IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement);
+                if (comparisonDiv) {
+                    const contentWrapper = comparisonDiv.querySelector('.comparison-content');
+                    contentWrapper.innerHTML = comparisonHTML;
+                    this.storedComparisons.set(productId, comparisonDiv.outerHTML);
                 }
-                else {
-                    comparisonDiv.innerHTML = comparisonHTML;
-                }
-                this.storedComparisons.set(productId, comparisonDiv.outerHTML);
             }
         });
+        // Hide loading indicators and show updated comparisons
+        this.updateLoadingState(cartItemElements, false);
         const summaryHTML = this.generateCartSummaryHTML(cartItems);
         this.insertSummaryDiv(summaryHTML);
         this.storedComparisons.set('cartSummary', summaryHTML);
@@ -228,11 +263,13 @@ export class CartPage {
         console.log("Inserting summary div");
         let summaryDiv = document.getElementById(Selectors.summary.container);
         if (!summaryDiv) {
-            summaryDiv = document.createElement('div');
-            summaryDiv.id = Selectors.summary.container;
-            summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+            summaryDiv = this.createSummaryDiv();
         }
-        summaryDiv.innerHTML = summaryHTML;
+        const contentWrapper = summaryDiv.querySelector('.summary-content');
+        const loadingIndicator = summaryDiv.querySelector('.loading-indicator');
+        contentWrapper.innerHTML = summaryHTML;
+        contentWrapper.style.display = 'block';
+        loadingIndicator.style.display = 'none';
         const insertAttempt = () => {
             const targetElement = document.querySelector(Selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
@@ -346,6 +383,41 @@ export class CartPage {
             });
         });
         return { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
+    }
+    showSummaryLoadingIndicator() {
+        let summaryDiv = document.getElementById(Selectors.summary.container);
+        if (!summaryDiv) {
+            summaryDiv = this.createSummaryDiv();
+            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            if (targetElement && targetElement.parentNode) {
+                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+            }
+        }
+        const contentWrapper = summaryDiv.querySelector('.summary-content');
+        const loadingIndicator = summaryDiv.querySelector('.loading-indicator');
+        contentWrapper.style.display = 'none';
+        loadingIndicator.style.display = 'flex';
+    }
+    hideAllLoadingIndicators() {
+        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+        this.updateLoadingState(cartItemElements, false);
+        const summaryDiv = document.getElementById(Selectors.summary.container);
+        if (summaryDiv) {
+            DisplayUtils.hideLoadingIndicator(summaryDiv);
+        }
+    }
+    createSummaryDiv() {
+        const summaryDiv = document.createElement('div');
+        summaryDiv.id = Selectors.summary.container;
+        summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+        const contentWrapper = document.createElement('div');
+        contentWrapper.classList.add('summary-content');
+        const loadingIndicator = DisplayUtils.createLoadingIndicator();
+        loadingIndicator.classList.add('loading-indicator');
+        loadingIndicator.style.display = 'none';
+        summaryDiv.appendChild(contentWrapper);
+        summaryDiv.appendChild(loadingIndicator);
+        return summaryDiv;
     }
     debounce(func, delay) {
         let debounceTimer;

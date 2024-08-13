@@ -22,10 +22,15 @@ export const IkeaProductPage = {
             const productName = productNameElement?.textContent?.trim() || '';
 
             if (productName && productId && localPrice) {
+                const comparisonContainer = DisplayUtils.createComparisonDiv('');
+                IkeaDomUtils.insertAfterElement(Selectors.productPage.priceAddons, comparisonContainer);
+                DisplayUtils.showLoadingIndicator(comparisonContainer);
+
                 const productItem = await new ProductItem(productName, productId, localPrice, 1);
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(productItem);
-                const comparisonDiv = DisplayUtils.createComparisonDiv(comparisonHTML);
-                IkeaDomUtils.insertAfterElement(Selectors.productPage.priceAddons, comparisonDiv);
+
+                DisplayUtils.hideLoadingIndicator(comparisonContainer);
+                comparisonContainer.innerHTML = comparisonHTML;
             }
         } catch (error) {
             IkeaDomUtils.handleComparisonError(error as Error, retryCount, this.compareProductPrice);

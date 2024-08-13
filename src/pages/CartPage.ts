@@ -30,6 +30,13 @@ export class CartPage {
             try {
                 this.cart = new Cart();
                 const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+
+                // Hide previous comparisons and show loading indicators for all cart items
+                this.updateLoadingState(cartItemElements, true);
+
+                // Show loading indicator for summary
+                this.showSummaryLoadingIndicator();
+
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
                     const productId = (itemElement.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || '';
                     const localPriceElement = itemElement.querySelector(Selectors.cartPage.priceElement);
@@ -65,12 +72,52 @@ export class CartPage {
                 this.lastCartState = currentCartState;
             } catch (error) {
                 console.error("Error in compareCartPrices:", error);
+                this.hideAllLoadingIndicators();
             }
         } else {
             console.log("Cart state unchanged, reapplying stored comparisons");
             this.reapplyStoredComparisons();
         }
     }
+
+    private updateLoadingState(cartItemElements: NodeListOf<Element>, isLoading: boolean): void {
+        cartItemElements.forEach((itemElement) => {
+            let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison) as HTMLElement;
+            if (!comparisonDiv) {
+                comparisonDiv = this.createComparisonDiv();
+                IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement as HTMLElement);
+            }
+
+            const contentWrapper = comparisonDiv.querySelector('.comparison-content') as HTMLElement;
+            const loadingIndicator = comparisonDiv.querySelector('.loading-indicator') as HTMLElement;
+
+            if (isLoading) {
+                contentWrapper.style.display = 'none';
+                loadingIndicator.style.display = 'flex';
+            } else {
+                contentWrapper.style.display = 'block';
+                loadingIndicator.style.display = 'none';
+            }
+        });
+    }
+
+    private createComparisonDiv(): HTMLElement {
+        const comparisonDiv = document.createElement('div');
+        comparisonDiv.classList.add('ikea-price-comparison');
+        comparisonDiv.style.cssText = 'background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px;';
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.classList.add('comparison-content');
+
+        const loadingIndicator = DisplayUtils.createLoadingIndicator();
+        loadingIndicator.classList.add('loading-indicator');
+        loadingIndicator.style.display = 'none';
+
+        comparisonDiv.appendChild(contentWrapper);
+        comparisonDiv.appendChild(loadingIndicator);
+
+        return comparisonDiv;
+    }    
 
     private updateCartComparisons(cartItems: ProductItem[]): void {
         const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
@@ -79,17 +126,17 @@ export class CartPage {
             const cartItem = cartItems.find(item => item.id === productId);
             if (cartItem) {
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(cartItem);
-                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
-                if (!comparisonDiv) {
-                    comparisonDiv = DisplayUtils.createComparisonDiv(comparisonHTML);
-                    comparisonDiv.classList.add('ikea-price-comparison');
-                    IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement as HTMLElement);
-                } else {
-                    comparisonDiv.innerHTML = comparisonHTML;
+                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison) as HTMLElement;
+                if (comparisonDiv) {
+                    const contentWrapper = comparisonDiv.querySelector('.comparison-content') as HTMLElement;
+                    contentWrapper.innerHTML = comparisonHTML;
+                    this.storedComparisons.set(productId, comparisonDiv.outerHTML);
                 }
-                this.storedComparisons.set(productId, comparisonDiv.outerHTML);
             }
         });
+
+        // Hide loading indicators and show updated comparisons
+        this.updateLoadingState(cartItemElements, false);
 
         const summaryHTML = this.generateCartSummaryHTML(cartItems);
         this.insertSummaryDiv(summaryHTML);
@@ -250,11 +297,14 @@ export class CartPage {
         console.log("Inserting summary div");
         let summaryDiv = document.getElementById(Selectors.summary.container);
         if (!summaryDiv) {
-            summaryDiv = document.createElement('div');
-            summaryDiv.id = Selectors.summary.container;
-            summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+            summaryDiv = this.createSummaryDiv();
         }
-        summaryDiv.innerHTML = summaryHTML;
+        const contentWrapper = summaryDiv.querySelector('.summary-content') as HTMLElement;
+        const loadingIndicator = summaryDiv.querySelector('.loading-indicator') as HTMLElement;
+
+        contentWrapper.innerHTML = summaryHTML;
+        contentWrapper.style.display = 'block';
+        loadingIndicator.style.display = 'none';
 
         const insertAttempt = () => {
             const targetElement = document.querySelector(Selectors.summary.insertTarget);
@@ -271,9 +321,9 @@ export class CartPage {
 
     private generateCartSummaryHTML(cartItems: ProductItem[]): string {
         const { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
-        
+
         let html = '<h3 style="font-size: 1.35rem;">Srovnání cen</h3>';
-        
+
         html += '<br><strong style="font-size: 1.2rem;">Pouze levnější položky</strong><br>';
         html += '<span style="font-size: 0.8rem;">V dané zemi byste nakoupili jen levnější zboží a zbytek v ČR.</span><br><br>';
 
@@ -297,9 +347,8 @@ export class CartPage {
             html += '<br>';
         }
 
-
         html += '<br><strong style="font-size: 1.2rem;">Nejlevnější zboží v každé zemi</strong><br>';
-        html += '<span style="font-size: 0.8rem;">Každou položku byste nakoupili tam, kde je nejlevnější.</span><br>';        
+        html += '<span style="font-size: 0.8rem;">Každou položku byste nakoupili tam, kde je nejlevnější.</span><br>';
 
         html += `<br><strong>Celkový rozdíl:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span><br><br>`;
         const groupedItems: { [country: string]: typeof optimalPurchaseStrategy } = {};
@@ -399,6 +448,49 @@ export class CartPage {
 
         return { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
     }
+
+    private showSummaryLoadingIndicator(): void {
+        let summaryDiv = document.getElementById(Selectors.summary.container);
+        if (!summaryDiv) {
+            summaryDiv = this.createSummaryDiv();
+            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            if (targetElement && targetElement.parentNode) {
+                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+            }
+        }
+        const contentWrapper = summaryDiv.querySelector('.summary-content') as HTMLElement;
+        const loadingIndicator = summaryDiv.querySelector('.loading-indicator') as HTMLElement;
+        contentWrapper.style.display = 'none';
+        loadingIndicator.style.display = 'flex';
+    }
+
+    private hideAllLoadingIndicators(): void {
+        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+        this.updateLoadingState(cartItemElements, false);
+
+        const summaryDiv = document.getElementById(Selectors.summary.container);
+        if (summaryDiv) {
+            DisplayUtils.hideLoadingIndicator(summaryDiv);
+        }
+    }
+
+    private createSummaryDiv(): HTMLElement {
+        const summaryDiv = document.createElement('div');
+        summaryDiv.id = Selectors.summary.container;
+        summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+
+        const contentWrapper = document.createElement('div');
+        contentWrapper.classList.add('summary-content');
+
+        const loadingIndicator = DisplayUtils.createLoadingIndicator();
+        loadingIndicator.classList.add('loading-indicator');
+        loadingIndicator.style.display = 'none';
+
+        summaryDiv.appendChild(contentWrapper);
+        summaryDiv.appendChild(loadingIndicator);
+
+        return summaryDiv;
+    }    
 
     private debounce<F extends (...args: any[]) => any>(func: F, delay: number): (...args: Parameters<F>) => void {
         let debounceTimer: ReturnType<typeof setTimeout>;
