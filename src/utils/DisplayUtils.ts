@@ -10,7 +10,7 @@ export const DisplayUtils = {
     },
 
     generateComparisonHTML(item: ProductItem): string {
-        let html = item.quantity === 1 ? '<strong>Cena v jiných zemích:</strong><br><br>' : `<strong>Cena za ${item.quantity} ks v jiných zemích:</strong><br><br>`;
+        let html = item.quantity === 1 ? '<strong>Cena v okolních zemích:</strong><br><br>' : `<strong>Cena za ${item.quantity} ks v okolních zemích:</strong><br><br>`;
         item.otherCountries.forEach((result: any) => {
             if (result.isAvailable) {
                 const formattedPrice = IkeaPriceUtils.formatPrice(result.totalPrice);

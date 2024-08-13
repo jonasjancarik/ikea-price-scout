@@ -34,10 +34,15 @@ export class CartPage {
                     if (!localPriceElement) {
                         throw new Error('Local price element not found');
                     }
-                    let localPrice = parseFloat(itemElement.querySelector(Selectors.cartPage.priceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
-                    // check if the displayed price is the discounted price - in that case, use the other price field
-                    if (itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+                    const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger); // that element is present only if the quantity is greater than 1
+                    let localPrice = null;
+                    if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+                        // if either the integer element is not present or the displayed price is the discounted price, use the other price field
                         localPrice = parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+                    }
+                    else {
+                        // if the integer element is present, use it
+                        localPrice = parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
                     }
                     const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput);
                     const quantity = parseInt(quantityInput.value);
@@ -242,10 +247,19 @@ export class CartPage {
         insertAttempt();
     }
     generateCartSummaryHTML(cartItems) {
-        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
-        let html = '<h3 style="font-size: 1.35rem;">Shrnutí úspor:</h3><br>';
-        html += '<strong style="font-size: 1.2rem;">Celý nákup v jedné zemi:</strong><br><br>';
-        const sortedSavings = Object.entries(totalSavings).sort((a, b) => b[1] - a[1]);
+        const { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
+        let html = '<h3 style="font-size: 1.35rem;">Srovnání cen</h3>';
+        html += '<br><strong style="font-size: 1.2rem;">Pouze levnější položky</strong><br>';
+        html += '<span style="font-size: 0.8rem;">V dané zemi byste nakoupili jen levnější zboží a zbytek v ČR.</span><br><br>';
+        const sortedCheaperItems = Object.entries(differenceCheaperItems).sort((a, b) => b[1] - a[1]);
+        for (const [country, savings] of sortedCheaperItems) {
+            const unavailableCount = unavailableCounts[country];
+            html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : 'style="color: red;"'}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings > 0 ? savings : -savings)}</span>`;
+            html += '<br>';
+        }
+        html += '<br><strong style="font-size: 1.2rem;">Celý nákup v jedné zemi</strong><br>';
+        html += '<span style="font-size: 0.8rem;">V dané zemi byste nakoupili všechno zboží, nehledě na to, jestli je levnější než v ČR.</span><br><br>';
+        const sortedSavings = Object.entries(totalDifference).sort((a, b) => b[1] - a[1]);
         for (const [country, savings] of sortedSavings) {
             const unavailableCount = unavailableCounts[country];
             html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : 'style="color: red;"'}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings > 0 ? savings : -savings)}</span>`;
@@ -254,8 +268,9 @@ export class CartPage {
             }
             html += '<br>';
         }
-        html += `<br><strong>Maximální úspora:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span>`;
-        html += '<br><br><strong style="font-size: 1.2rem;">Optimální strategie nákupu:</strong><br><br>';
+        html += '<br><strong style="font-size: 1.2rem;">Nejlevnější zboží v každé zemi</strong><br>';
+        html += '<span style="font-size: 0.8rem;">Každou položku byste nakoupili tam, kde je nejlevnější.</span><br>';
+        html += `<br><strong>Celkový rozdíl:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span><br><br>`;
         const groupedItems = {};
         optimalPurchaseStrategy.forEach(item => {
             if (!groupedItems[item.country]) {
@@ -278,26 +293,42 @@ export class CartPage {
         return html;
     }
     calculateSavings(cartItems) {
-        let totalSavings = {};
+        let totalDifference = {}; // total difference between local prices and prices in that country (including more expensive items)
+        let differenceCheaperItems = {}; // savings if only items cheaper than local price were purchased in that country
         let optimalSavings = 0;
         let unavailableCounts = {};
         let optimalPurchaseStrategy = [];
         cartItems.forEach(item => {
+            // initially, assume that the cheapest country is the local one, i.e. Czechia
             let cheapestPrice = item.localPriceForQuantity;
             let cheapestCountry = 'Česko';
             let cheapestUrl = item.url;
+            // iterate over all other countries and find the cheapest one
             item.otherCountries.forEach((result) => {
+                // initiate unavailable count for this country
                 if (!unavailableCounts[result.name]) {
                     unavailableCounts[result.name] = 0;
                 }
+                // if the product is not available in this country, increment the unavailable count
                 if (!result.isAvailable) {
                     unavailableCounts[result.name]++;
                     return;
                 }
-                if (!totalSavings[result.name]) {
-                    totalSavings[result.name] = 0;
+                // initiate total difference for this country
+                if (!totalDifference[result.name]) {
+                    totalDifference[result.name] = 0;
                 }
-                totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
+                // initiate difference for cheaper items for this country
+                if (!differenceCheaperItems[result.name]) {
+                    differenceCheaperItems[result.name] = 0;
+                }
+                // update total difference by adding the difference between the local price for this item and the price in this country
+                totalDifference[result.name] += item.localPriceForQuantity - result.totalPrice;
+                // if the price in this country is cheaper than the local price for this item, update the difference for cheaper items
+                if (result.totalPrice < item.localPriceForQuantity) {
+                    differenceCheaperItems[result.name] += item.localPriceForQuantity - result.totalPrice;
+                }
+                // if the price in this country is cheaper than the cheapest price found so far, update the cheapest price and country
                 if (result.totalPrice < cheapestPrice) {
                     cheapestPrice = result.totalPrice;
                     cheapestCountry = result.name;
@@ -314,7 +345,7 @@ export class CartPage {
                 quantity: item.quantity
             });
         });
-        return { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
+        return { totalDifference, differenceCheaperItems, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
     }
     debounce(func, delay) {
         let debounceTimer;
