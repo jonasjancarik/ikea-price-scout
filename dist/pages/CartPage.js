@@ -2,6 +2,7 @@ import { Cart } from '../models/Cart.js';
 import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
 import { Selectors } from '../selectors/selectors.js';
+import { IkeaPriceUtils } from '../utils/PriceUtils.js';
 export class CartPage {
     constructor() {
         this.cart = null;
@@ -80,7 +81,8 @@ export class CartPage {
                 this.storedComparisons.set(productId, comparisonDiv.outerHTML);
             }
         });
-        const summaryHTML = DisplayUtils.updateCartSummary(cartItems);
+        const summaryHTML = this.generateCartSummaryHTML(cartItems);
+        this.insertSummaryDiv(summaryHTML);
         this.storedComparisons.set('cartSummary', summaryHTML);
     }
     reapplyStoredComparisons() {
@@ -99,7 +101,7 @@ export class CartPage {
         if (storedSummary) {
             let summaryDiv = document.getElementById(Selectors.summary.container);
             if (!summaryDiv) {
-                DisplayUtils.insertSummaryDiv(storedSummary);
+                this.insertSummaryDiv(storedSummary);
             }
         }
     }
@@ -216,6 +218,103 @@ export class CartPage {
                 }
             }
         });
+    }
+    insertSummaryDiv(summaryHTML) {
+        console.log("Inserting summary div");
+        let summaryDiv = document.getElementById(Selectors.summary.container);
+        if (!summaryDiv) {
+            summaryDiv = document.createElement('div');
+            summaryDiv.id = Selectors.summary.container;
+            summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
+        }
+        summaryDiv.innerHTML = summaryHTML;
+        const insertAttempt = () => {
+            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            if (targetElement && targetElement.parentNode) {
+                console.log("Target element found, inserting summary div");
+                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+            }
+            else {
+                console.log("Target element for summary not found, retrying in 500ms");
+                setTimeout(insertAttempt, 500);
+            }
+        };
+        insertAttempt();
+    }
+    generateCartSummaryHTML(cartItems) {
+        const { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy } = this.calculateSavings(cartItems);
+        let html = '<h3 style="font-size: 1.35rem;">Shrnutí úspor:</h3><br>';
+        html += '<strong style="font-size: 1.2rem;">Celý nákup v jedné zemi:</strong><br><br>';
+        const sortedSavings = Object.entries(totalSavings).sort((a, b) => b[1] - a[1]);
+        for (const [country, savings] of sortedSavings) {
+            const unavailableCount = unavailableCounts[country];
+            html += `<strong>${country}:</strong> <span ${savings > 0 ? 'style="color: green;"' : 'style="color: red;"'}>${savings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(savings > 0 ? savings : -savings)}</span>`;
+            if (unavailableCount > 0) {
+                html += ` <a href="#" class="show-unavailable" style="font-size: 0.8rem;" data-country="${country}">(${unavailableCount} ${unavailableCount === 1 ? 'položka nedostupná' : 'položky nedostupné'})</a>`;
+            }
+            html += '<br>';
+        }
+        html += `<br><strong>Maximální úspora:</strong> <span ${optimalSavings > 0 ? 'style="color: green;"' : ''}>${optimalSavings > 0 ? '-' : '+'}${IkeaPriceUtils.formatPrice(optimalSavings)}</span>`;
+        html += '<br><br><strong style="font-size: 1.2rem;">Optimální strategie nákupu:</strong><br><br>';
+        const groupedItems = {};
+        optimalPurchaseStrategy.forEach(item => {
+            if (!groupedItems[item.country]) {
+                groupedItems[item.country] = [];
+            }
+            groupedItems[item.country].push(item);
+        });
+        for (const country in groupedItems) {
+            html += `<strong>${country}:</strong><br>`;
+            html += `<ul style="margin-left: 1em;">`;
+            groupedItems[country].forEach(item => {
+                html += `<li><a href="${item.url}" target="_blank">${item.productName}</a> (${item.quantity} ks):<br><span style="white-space: nowrap;">${IkeaPriceUtils.formatPrice(item.price)}</span>`;
+                if (country !== 'Česko') {
+                    html += ` <span style="white-space: nowrap; color: green; font-size: 0.8rem;">(-${IkeaPriceUtils.formatPrice(item.saving)})</span>`;
+                }
+                html += '</li>';
+            });
+            html += `</ul><br>`;
+        }
+        return html;
+    }
+    calculateSavings(cartItems) {
+        let totalSavings = {};
+        let optimalSavings = 0;
+        let unavailableCounts = {};
+        let optimalPurchaseStrategy = [];
+        cartItems.forEach(item => {
+            let cheapestPrice = item.localPriceForQuantity;
+            let cheapestCountry = 'Česko';
+            let cheapestUrl = item.url;
+            item.otherCountries.forEach((result) => {
+                if (!unavailableCounts[result.name]) {
+                    unavailableCounts[result.name] = 0;
+                }
+                if (!result.isAvailable) {
+                    unavailableCounts[result.name]++;
+                    return;
+                }
+                if (!totalSavings[result.name]) {
+                    totalSavings[result.name] = 0;
+                }
+                totalSavings[result.name] += item.localPriceForQuantity - result.totalPrice;
+                if (result.totalPrice < cheapestPrice) {
+                    cheapestPrice = result.totalPrice;
+                    cheapestCountry = result.name;
+                    cheapestUrl = result.url;
+                }
+            });
+            optimalSavings += item.localPriceForQuantity - cheapestPrice;
+            optimalPurchaseStrategy.push({
+                productName: item.productName,
+                country: cheapestCountry,
+                price: cheapestPrice,
+                saving: item.localPriceForQuantity - cheapestPrice,
+                url: cheapestUrl,
+                quantity: item.quantity
+            });
+        });
+        return { totalSavings, optimalSavings, unavailableCounts, optimalPurchaseStrategy };
     }
     debounce(func, delay) {
         let debounceTimer;
