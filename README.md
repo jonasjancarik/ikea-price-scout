@@ -1,4 +1,4 @@
-# ikea-price-comparison-chrome
+# IKEA Price Scout
 
 ! Prosím berte na vědomí, že jde o rozpracovaný projekt. Rozšíření manuálně nainstalované se nebude samo aktualizovat a může kdykoliv přestat fungovat.
  
