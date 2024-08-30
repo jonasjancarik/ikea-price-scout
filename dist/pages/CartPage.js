@@ -71,7 +71,13 @@ export class CartPage {
     }
     getQuantity(itemElement) {
         const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput);
-        return parseInt(quantityInput.value);
+        try {
+            return parseInt(quantityInput.value);
+        }
+        catch (error) {
+            ErrorUtils.handleError(error, 'CartPage.getQuantity', 'Nastala chyba při získávání počtu položek v košíku. Zkuste obnovit stránku.');
+            return 1;
+        }
     }
     getProductName(itemElement) {
         const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);

@@ -83,7 +83,16 @@ export class CartPage {
 
     private getQuantity(itemElement: Element): number {
         const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
-        return parseInt(quantityInput.value);
+        try {
+            return parseInt(quantityInput.value);
+        } catch (error) {
+            ErrorUtils.handleError(
+                error as Error,
+                'CartPage.getQuantity',
+                'Nastala chyba při získávání počtu položek v košíku. Zkuste obnovit stránku.'
+            );
+            return 1;
+        }
     }
 
     private getProductName(itemElement: Element): string {
