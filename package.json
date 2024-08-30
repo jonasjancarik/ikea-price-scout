@@ -1,6 +1,6 @@
 {
   "name": "ikea-price-scout",
-  "version": "0.4",
+  "version": "0.4.1",
   "description": "Work in progress - Chrome extension for comparing prices of Ikea products across different countries",
   "main": "main.js",
   "scripts": {
