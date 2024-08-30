@@ -10,7 +10,7 @@ export const Selectors = {
 
     // Cart page selectors
     cartPage: {
-        cartItem: '[class^="product_product__"]',  // Matches any class starting with "product_product__"
+        cartItem: '[itemtype="http://schema.org/Product"]',
         productLink: '.cart-ingka-link',
         priceElement: '.cart-ingka-price__sr-text',
         priceInteger: '.cart-ingka-price-module__addons .cart-ingka-price__integer',
@@ -27,13 +27,13 @@ export const Selectors = {
 
     // Cart container selectors
     cartContainer: {
-        desktop: '[class^="shoppingBag_desktop_contentGrid__"]',  // Matches any class starting with "shoppingBag_desktop_contentGrid__"
+        desktop: '[class^="_contentGrid_akbk2_1"]',  // Matches any class starting with "shoppingBag_desktop_contentGrid__"
         mobile: '[class^="shoppingBag_mobile_contentGrid__"]',  // Matches any class starting with "shoppingBag_mobile_contentGrid__"
     },
 
     // Summary selectors
     summary: {
-        container: 'ikea-price-comparison-summary',  // This is an ID, so we don't need to change it
-        insertTarget: '[class^="checkoutInformation_checkoutInformation__"]',  // Matches any class starting with "checkoutInformation_checkoutInformation__"
+        container: 'ikea-price-comparison-summary',
+        insertTarget: '[class^="_checkoutInformation_"]',
     },
 };
