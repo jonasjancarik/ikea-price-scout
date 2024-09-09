@@ -19,13 +19,18 @@ export const IkeaProductPage = {
             }
             const productName = productNameElement?.textContent?.trim() || '';
             if (productName && productId && localPrice) {
-                const comparisonContainer = DisplayUtils.createComparisonDiv('');
-                IkeaDomUtils.insertAfterElement(Selectors.productPage.priceAddons, comparisonContainer);
-                DisplayUtils.showLoadingIndicator(comparisonContainer);
-                const productItem = await new ProductItem(productName, productId, localPrice, 1);
-                const comparisonHTML = DisplayUtils.generateComparisonHTML(productItem);
-                DisplayUtils.hideLoadingIndicator(comparisonContainer);
-                comparisonContainer.innerHTML = comparisonHTML;
+                const existingComparisonDiv = document.querySelector('.price-scout-price-comparison');
+                let comparisonContainer;
+                if (!existingComparisonDiv) { // prevent duplicate comparison divs
+                    comparisonContainer = DisplayUtils.createComparisonDiv('');
+                    comparisonContainer.classList.add('price-scout-price-comparison');
+                    IkeaDomUtils.insertAfterElement(Selectors.productPage.priceAddons, comparisonContainer);
+                    DisplayUtils.showLoadingIndicator(comparisonContainer);
+                    const productItem = await new ProductItem(productName, productId, localPrice, 1);
+                    const comparisonHTML = DisplayUtils.generateComparisonHTML(productItem);
+                    DisplayUtils.hideLoadingIndicator(comparisonContainer);
+                    comparisonContainer.innerHTML = comparisonHTML;
+                }
             }
         }
         catch (error) {
