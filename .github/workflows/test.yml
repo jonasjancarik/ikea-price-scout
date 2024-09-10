@@ -19,7 +19,7 @@ jobs:
       with:
         node-version: '14'
     - run: npm ci
-    - run: npm run build:prod
+    - run: npm run build:dev
     - name: Run tests
       uses: mujo-code/puppeteer-headful@16.6.0
       env:
