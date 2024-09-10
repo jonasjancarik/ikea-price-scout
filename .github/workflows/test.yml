@@ -1,0 +1,28 @@
+name: Extension Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    - run: npm ci
+    - run: npm run build:prod
+    - name: Run tests
+      uses: mujo-code/puppeteer-headful@16.6.0
+      env:
+        CI: 'true'
+      with:
+        args: npm test

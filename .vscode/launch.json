@@ -15,6 +15,21 @@
       "webRoot": "${workspaceFolder}/src",
       "sourceMaps": true,
       "preLaunchTask": "build:dev"
-    }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Puppeteer Tests",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+      "args": [
+        "--runInBand"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+      },
+      "preLaunchTask": "build:dev"
+    }    
   ]
 }
