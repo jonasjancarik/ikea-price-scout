@@ -16,7 +16,7 @@ export const Selectors = {
         quantityInput: '.cart-ingka-quantity-stepper__input',
         nameDecorator: '.cart-ingka-price-module__name-decorator',
         description: '.cart-ingka-price-module__description',
-        priceComparison: '.ikea-price-comparison',
+        priceComparison: '.price-scout-price-comparison',
         primaryCurrencyPrice: '.cart-ingka-price-module__primary-currency-price',
         quantityDecrease: '.cart-ingka-quantity-stepper__decrease',
         quantityIncrease: '.cart-ingka-quantity-stepper__increase',
@@ -29,7 +29,7 @@ export const Selectors = {
     },
     // Summary selectors
     summary: {
-        container: 'ikea-price-comparison-summary',
+        container: 'price-scout-comparison-summary',
         insertTarget: '[class^="_checkoutInformation_"]',
     },
 };

@@ -153,7 +153,7 @@ export class CartPage {
 
     private createComparisonDiv(): HTMLElement {
         const comparisonDiv = document.createElement('div');
-        comparisonDiv.classList.add('ikea-price-comparison');
+        comparisonDiv.classList.add(Selectors.cartPage.priceComparison.replace('.', ''));  // not sure if the replace is needed
         comparisonDiv.style.cssText = 'background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px;';
 
         const contentWrapper = document.createElement('div');
