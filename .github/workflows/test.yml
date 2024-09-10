@@ -22,10 +22,10 @@ jobs:
       run: npm cache clean --force
     - name: Install dependencies
       run: npm ci
+    - name: Install Chrome for Puppeteer
+      run: npx puppeteer browsers install chrome
     - run: npm run build:prod
     - name: Run tests
-      uses: mujo-code/puppeteer-headful@18.9.0
       env:
         CI: 'true'
-      with:
-        args: npm test
+      run: npm test
