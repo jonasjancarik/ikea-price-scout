@@ -18,6 +18,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '22'
+    - name: Echo CI
+      run: echo $CI
     - name: Clear npm cache
       run: npm cache clean --force
     - name: Install dependencies

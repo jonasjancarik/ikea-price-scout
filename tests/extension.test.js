@@ -1,25 +1,21 @@
 const puppeteer = require('puppeteer');
-const path = require('path');
+
+let browser;
+let page;
+
 
 describe('IKEA Price Scout Extension', () => {
-    let browser;
-    let page;
-
     beforeAll(async () => {
-        console.log('Setting up the browser...');
-        const extensionPath = path.resolve(__dirname, '../dev-dist');
-        browser = await puppeteer.launch({
-            headless: false,
+        browser = await puppeteer.launch({  // this shouldn't be needed - we should be able to set the extension in jest-puppeteer.config.js and browser should be launched automatically, but I couldn't get it to work
+            headless: process.env.CI === 'true',
             args: [
-                `--disable-extensions-except=${extensionPath}`,
-                `--load-extension=${extensionPath}`,
+                `--disable-extensions-except=dev-dist`,
+                `--load-extension=dev-dist`,
                 '--start-maximized', // This will maximize the browser window
             ],
         });
-        console.log('Browser launched');
-        
-        // Create a new page and set its viewport to a large size
         page = await browser.newPage();
+        console.log('Setting up the browser...');
         await page.setViewport({
             width: 1920,
             height: 1080,
@@ -28,9 +24,7 @@ describe('IKEA Price Scout Extension', () => {
     });
 
     afterAll(async () => {
-        console.log('Closing the browser...');
         await browser.close();
-        console.log('Browser closed');
     });
 
     const productUrls = [
@@ -68,7 +62,7 @@ describe('IKEA Price Scout Extension', () => {
         } catch (error) {
             console.error('Price comparison element not found:', error);
             console.log('Current URL:', page.url());
-            console.log('Page content:', await page.content());
+            // console.log('Page content:', await page.content());
             throw error;
         }
 
