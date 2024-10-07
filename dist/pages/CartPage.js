@@ -51,7 +51,7 @@ export class CartPage {
                 this.lastCartState = currentCartState;
             }
             catch (error) {
-                ErrorUtils.handleError(error, 'CartPage.compareCartPrices', 'Nastala chyba při porovnávání cen v košíku. Zkuste obnovit stránku.');
+                ErrorUtils.handleError(error, 'CartPage.compareCartPrices', 'Při porovnávání cen se něco pokazilo, už na tom pracujeme.');
                 this.hideAllLoadingIndicators();
             }
         }

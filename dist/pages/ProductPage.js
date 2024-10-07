@@ -24,6 +24,10 @@ export const IkeaProductPage = {
                 if (!existingComparisonDiv) { // prevent duplicate comparison divs
                     comparisonContainer = DisplayUtils.createComparisonDiv('');
                     comparisonContainer.classList.add('price-scout-price-comparison');
+                    const priceAddonsElement = document.querySelector(Selectors.productPage.priceAddons);
+                    if (!priceAddonsElement) {
+                        throw new Error('Price addons element not found');
+                    }
                     IkeaDomUtils.insertAfterElement(Selectors.productPage.priceAddons, comparisonContainer);
                     DisplayUtils.showLoadingIndicator(comparisonContainer);
                     const productItem = await new ProductItem(productName, productId, localPrice, 1);
@@ -31,6 +35,9 @@ export const IkeaProductPage = {
                     DisplayUtils.hideLoadingIndicator(comparisonContainer);
                     comparisonContainer.innerHTML = comparisonHTML;
                 }
+            }
+            else {
+                throw new Error('Missing product information');
             }
         }
         catch (error) {

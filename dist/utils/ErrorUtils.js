@@ -18,7 +18,7 @@ export const ErrorUtils = {
       max-width: 80%;
       text-align: center;
     `;
-        errorDiv.innerHTML = 'Chyba rozšíření IKEA Price Scout:<br><br>' + message;
+        errorDiv.innerHTML = message;
         document.body.appendChild(errorDiv);
         setTimeout(() => {
             errorDiv.style.opacity = '0';

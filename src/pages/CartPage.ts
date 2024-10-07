@@ -62,7 +62,7 @@ export class CartPage {
                 ErrorUtils.handleError(
                     error as Error,
                     'CartPage.compareCartPrices',
-                    'Nastala chyba při porovnávání cen v košíku. Zkuste obnovit stránku.'
+                    'Při porovnávání cen se něco pokazilo, už na tom pracujeme.'
                 );
                 this.hideAllLoadingIndicators();
             }
