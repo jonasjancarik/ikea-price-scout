@@ -46,7 +46,7 @@ export const IkeaProductPage = {
                 setTimeout(() => this.compareProductPrice(retryCount + 1), 2000);
             }
             else {
-                ErrorUtils.handleError(error, 'ProductPage.compareProductPrice', 'Nepodařilo se načíst srovnání cen. Zkuste obnovit stránku.');
+                ErrorUtils.handleError(error, 'ProductPage.compareProductPrice', 'Při porovnávání cen se něco pokazilo, už na tom pracujeme.');
             }
         }
     }

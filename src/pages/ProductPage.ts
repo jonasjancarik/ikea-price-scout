@@ -53,7 +53,7 @@ export const IkeaProductPage = {
                 ErrorUtils.handleError(
                     error as Error,
                     'ProductPage.compareProductPrice',
-                    'Nepodařilo se načíst srovnání cen. Zkuste obnovit stránku.'
+                    'Při porovnávání cen se něco pokazilo, už na tom pracujeme.'
                 );
             }
         }
