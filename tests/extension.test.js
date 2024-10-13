@@ -12,6 +12,8 @@ describe('IKEA Price Scout Extension', () => {
                 `--disable-extensions-except=dev-dist`,
                 `--load-extension=dev-dist`,
                 '--start-maximized', // This will maximize the browser window
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
             ],
         });
         page = await browser.newPage();
