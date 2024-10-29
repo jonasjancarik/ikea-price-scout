@@ -27,7 +27,7 @@ export const Selectors = {
 
     // Cart container selectors
     cartContainer: {
-        desktop: '[class^="_contentGrid_akbk2_1"]',  // Matches any class starting with "shoppingBag_desktop_contentGrid__"
+        desktop: '[class^="_contentGrid_"]',
         mobile: '[class^="shoppingBag_mobile_contentGrid__"]',  // Matches any class starting with "shoppingBag_mobile_contentGrid__"
     },
 
