@@ -225,7 +225,8 @@ export class CartPage {
                     setTimeout(() => attemptAttachment(retries + 1), 500);
                 }
                 else {
-                    console.error("Failed to attach cart observer after maximum retries");
+                    const error = new Error("Failed to attach cart observer after maximum retries");
+                    ErrorUtils.handleError(error, 'CartPage.setupCartObserver', 'Při porovnávání cen se něco pokazilo, už na tom pracujeme.');
                 }
             };
             attemptAttachment();
@@ -267,7 +268,7 @@ export class CartPage {
             }
         }
         catch (error) {
-            ErrorUtils.handleError(error, 'CartPage.setupCartObserver', 'Nepodařilo se nastavit sledování změn v košíku. Některé funkce nemusí fungovat správně.');
+            ErrorUtils.handleError(error, 'CartPage.setupCartObserver', 'Nepodařilo se nastavit sledování změn v košíku. Zkuste obnovit stránku.');
         }
     }
     attachCartEventListeners() {
