@@ -1,6 +1,7 @@
 // IkeaPriceUtils.ts
 
 import { ExchangeRates } from './ExchangeRates.js';
+import { Selectors } from '../selectors/selectors.js';
 
 interface ComparisonCountry {
     country: string;
@@ -39,7 +40,7 @@ export const IkeaPriceUtils = {
                 const html = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-                const comparisonPriceElement = doc.querySelector('.pip-temp-price__integer');
+                const comparisonPriceElement = doc.querySelector(Selectors.productPage.priceInteger);
                 if (!comparisonPriceElement) {
                     return { ...comp, price: null, isAvailable: false };
                 }
