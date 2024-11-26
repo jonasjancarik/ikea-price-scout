@@ -2,9 +2,9 @@
 export const Selectors = {
     // Product page selectors
     productPage: {
-        priceInteger: '.pip-temp-price__integer',
+        priceInteger: '.pip-price__integer',
         productName: '.pip-header-section__title--big',
-        priceAddons: '.pip-temp-price-module__addons',
+        priceAddons: '.pip-price-module__addon',
     },
     // Cart page selectors
     cartPage: {
