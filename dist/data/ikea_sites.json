@@ -1,0 +1,931 @@
+{
+    "countries": [
+        {
+            "country": "Puerto Rico",
+            "domain": "ikea.pr",
+            "languages": [
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.pr/puertorico/es/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.pr/puertorico/en/"
+                }
+            ]
+        },
+        {
+            "country": "United Arab Emirates",
+            "domain": "ikea.ae",
+            "languages": [
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/ae/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ae/en/"
+                }
+            ]
+        },
+        {
+            "country": "Hong Kong",
+            "domain": "ikea.com.hk",
+            "languages": [
+                {
+                    "code": "zh",
+                    "name": "中文 (Zhōngwén)",
+                    "url": "https://www.ikea.com.hk/zh"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com.hk/en"
+                }
+            ]
+        },
+        {
+            "country": "Dominican Republic",
+            "domain": "ikea.com.do",
+            "languages": [
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.com.do/es/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com.do/en/"
+                }
+            ]
+        },
+        {
+            "country": "Canada",
+            "domain": "ikea.ca",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ca/en/"
+                },
+                {
+                    "code": "fr",
+                    "name": "Français",
+                    "url": "https://www.ikea.com/ca/fr/"
+                }
+            ]
+        },
+        {
+            "country": "Morocco",
+            "domain": "ikea.ma",
+            "languages": [
+                {
+                    "code": "fr",
+                    "name": "Français",
+                    "url": "https://www.ikea.com/ma/fr/"
+                },
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/ma/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ma/en/"
+                }
+            ]
+        },
+        {
+            "country": "Poland",
+            "domain": "ikea.pl",
+            "languages": [
+                {
+                    "code": "pl",
+                    "name": "Polski",
+                    "url": "https://www.ikea.com/pl/pl/"
+                }
+            ]
+        },
+        {
+            "country": "Jordan",
+            "domain": "ikea.jo",
+            "languages": [
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/jo/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/jo/en/"
+                }
+            ]
+        },
+        {
+            "country": "Czech Republic",
+            "domain": "ikea.cz",
+            "languages": [
+                {
+                    "code": "cs",
+                    "name": "Čeština",
+                    "url": "https://www.ikea.com/cz/cs/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/cz/en/"
+                }
+            ]
+        },
+        {
+            "country": "Thailand",
+            "domain": "ikea.com/th",
+            "languages": [
+                {
+                    "code": "th",
+                    "name": "ภาษาไทย (Thai)",
+                    "url": "https://www.ikea.com/th/th/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/th/en/"
+                }
+            ]
+        },
+        {
+            "country": "United Kingdom",
+            "domain": "ikea.co.uk",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/gb/en/"
+                }
+            ]
+        },
+        {
+            "country": "Switzerland",
+            "domain": "ikea.ch",
+            "languages": [
+                {
+                    "code": "de",
+                    "name": "Deutsch",
+                    "url": "https://www.ikea.com/ch/de/"
+                },
+                {
+                    "code": "fr",
+                    "name": "Français",
+                    "url": "https://www.ikea.com/ch/fr/"
+                },
+                {
+                    "code": "it",
+                    "name": "Italiano",
+                    "url": "https://www.ikea.com/ch/it/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ch/en/"
+                }
+            ]
+        },
+        {
+            "country": "Serbia",
+            "domain": "ikea.rs",
+            "languages": [
+                {
+                    "code": "sr",
+                    "name": "српски (srpski)",
+                    "url": "https://www.ikea.com/rs/sr/"
+                }
+            ]
+        },
+        {
+            "country": "Belgium",
+            "domain": "ikea.be",
+            "languages": [
+                {
+                    "code": "nl",
+                    "name": "Nederlands",
+                    "url": "https://www.ikea.com/be/nl/"
+                },
+                {
+                    "code": "fr",
+                    "name": "Français",
+                    "url": "https://www.ikea.com/be/fr/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/be/en/"
+                }
+            ]
+        },
+        {
+            "country": "Bahrain",
+            "domain": "ikea.bh",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/bh/en/"
+                },
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/bh/ar/"
+                }
+            ]
+        },
+        {
+            "country": "Hungary",
+            "domain": "ikea.hu",
+            "languages": [
+                {
+                    "code": "hu",
+                    "name": "Magyar",
+                    "url": "https://www.ikea.com/hu/hu/"
+                }
+            ]
+        },
+        {
+            "country": "Greece",
+            "domain": "ikea.gr",
+            "languages": [
+                {
+                    "code": "el",
+                    "name": "Ελληνικά (Greek)",
+                    "url": "https://www.ikea.gr/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.gr/en/"
+                }
+            ]
+        },
+        {
+            "country": "Indonesia",
+            "domain": "ikea.co.id",
+            "languages": [
+                {
+                    "code": "id",
+                    "name": "Bahasa Indonesia (Indonesian)",
+                    "url": "https://www.ikea.co.id/in"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.co.id/en"
+                }
+            ]
+        },
+        {
+            "country": "Egypt",
+            "domain": "ikea.eg",
+            "languages": [
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/eg/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/eg/en/"
+                }
+            ]
+        },
+        {
+            "country": "United States",
+            "domain": "ikea.us",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/us/en/"
+                },
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.com/us/es/"
+                }
+            ]
+        },
+        {
+            "country": "Slovakia",
+            "domain": "ikea.sk",
+            "languages": [
+                {
+                    "code": "sk",
+                    "name": "Slovenčina",
+                    "url": "https://www.ikea.com/sk/sk/"
+                }
+            ]
+        },
+        {
+            "country": "Sweden",
+            "domain": "ikea.se",
+            "languages": [
+                {
+                    "code": "sv",
+                    "name": "Svenska",
+                    "url": "https://www.ikea.com/se/sv/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/se/en/"
+                }
+            ]
+        },
+        {
+            "country": "Singapore",
+            "domain": "ikea.sg",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/sg/en/"
+                }
+            ]
+        },
+        {
+            "country": "Philippines",
+            "domain": "ikea.ph",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ph/en/"
+                }
+            ]
+        },
+        {
+            "country": "Portugal",
+            "domain": "ikea.pt",
+            "languages": [
+                {
+                    "code": "pt",
+                    "name": "Português",
+                    "url": "https://www.ikea.com/pt/pt/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/pt/en/"
+                }
+            ]
+        },
+        {
+            "country": "Denmark",
+            "domain": "ikea.dk",
+            "languages": [
+                {
+                    "code": "da",
+                    "name": "Dansk",
+                    "url": "https://www.ikea.com/dk/da/"
+                }
+            ]
+        },
+        {
+            "country": "Iceland",
+            "domain": "ikea.is",
+            "languages": [
+                {
+                    "code": "is",
+                    "name": "Íslenska",
+                    "url": "https://www.ikea.is/is"
+                }
+            ]
+        },
+        {
+            "country": "Bulgaria",
+            "domain": "ikea.bg",
+            "languages": [
+                {
+                    "code": "bg",
+                    "name": "български (bãlgarski)",
+                    "url": "https://www.ikea.bg/"
+                }
+            ]
+        },
+        {
+            "country": "Turkey",
+            "domain": "ikea.com.tr",
+            "languages": [
+                {
+                    "code": "tr",
+                    "name": "Türkçe",
+                    "url": "https://www.ikea.com.tr/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com.tr/en/"
+                }
+            ]
+        },
+        {
+            "country": "Lithuania",
+            "domain": "ikea.lt",
+            "languages": [
+                {
+                    "code": "lt",
+                    "name": "Lietuvių kalba (Lithuanian)",
+                    "url": "https://www.ikea.lt/lt/"
+                },
+                {
+                    "code": "ru",
+                    "name": "Pусский (Russian)",
+                    "url": "https://www.ikea.lt/ru/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.lt/en/"
+                }
+            ]
+        },
+        {
+            "country": "Japan",
+            "domain": "ikea.jp",
+            "languages": [
+                {
+                    "code": "ja",
+                    "name": "日本語 (Nihongo)",
+                    "url": "https://www.ikea.com/jp/ja/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/jp/en/"
+                }
+            ]
+        },
+        {
+            "country": "Cyprus",
+            "domain": "ikea.com.cy",
+            "languages": [
+                {
+                    "code": "el",
+                    "name": "Ελληνικά (Greek)",
+                    "url": "https://www.ikea.com.cy/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com.cy/en/"
+                }
+            ]
+        },
+        {
+            "country": "New Zealand",
+            "domain": "ikea.nz",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/nz/en/"
+                }
+            ]
+        },
+        {
+            "country": "Australia",
+            "domain": "ikea.com.au",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/au/en/"
+                }
+            ]
+        },
+        {
+            "country": "China",
+            "domain": "ikea.cn",
+            "languages": [
+                {
+                    "code": "zh",
+                    "name": "中文 (Zhōngwén)",
+                    "url": "https://www.ikea.cn/cn/zh/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.cn/cn/en/"
+                }
+            ]
+        },
+        {
+            "country": "Saudi Arabia",
+            "domain": "ikea.com/sa",
+            "languages": [
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/sa/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/sa/en/"
+                }
+            ]
+        },
+        {
+            "country": "Kuwait",
+            "domain": "ikea.com/kw",
+            "languages": [
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/kw/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/kw/en/"
+                }
+            ]
+        },
+        {
+            "country": "South Korea",
+            "domain": "ikea.kr",
+            "languages": [
+                {
+                    "code": "ko",
+                    "name": "한국어 (Korean)",
+                    "url": "https://www.ikea.com/kr/ko/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/kr/en/"
+                }
+            ]
+        },
+        {
+            "country": "Finland",
+            "domain": "ikea.fi",
+            "languages": [
+                {
+                    "code": "fi",
+                    "name": "Suomi",
+                    "url": "https://www.ikea.com/fi/fi/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/fi/en/"
+                }
+            ]
+        },
+        {
+            "country": "Spain",
+            "domain": "ikea.es",
+            "languages": [
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.es/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.es/en/"
+                }
+            ]
+        },
+        {
+            "country": "Croatia",
+            "domain": "ikea.hr",
+            "languages": [
+                {
+                    "code": "hr",
+                    "name": "Hrvatski",
+                    "url": "https://www.ikea.com/hr/hr/"
+                }
+            ]
+        },
+        {
+            "country": "Norway",
+            "domain": "ikea.no",
+            "languages": [
+                {
+                    "code": "no",
+                    "name": "Norsk",
+                    "url": "https://www.ikea.com/no/no/"
+                }
+            ]
+        },
+        {
+            "country": "Qatar",
+            "domain": "ikea.qa",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/qa/en/"
+                },
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/qa/ar/"
+                }
+            ]
+        },
+        {
+            "country": "Israel",
+            "domain": "ikea.il",
+            "languages": [
+                {
+                    "code": "he",
+                    "name": "עברית (Ivrit)",
+                    "url": "https://www.ikea.com/il/he/"
+                },
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/il/ar/"
+                }
+            ]
+        },
+        {
+            "country": "Oman",
+            "domain": "ikea.om",
+            "languages": [
+                {
+                    "code": "ar",
+                    "name": "العربية (Arabic)",
+                    "url": "https://www.ikea.com/om/ar/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/om/en/"
+                }
+            ]
+        },
+        {
+            "country": "Germany",
+            "domain": "ikea.de",
+            "languages": [
+                {
+                    "code": "de",
+                    "name": "Deutsch",
+                    "url": "https://www.ikea.com/de/de/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/de/en/"
+                }
+            ]
+        },
+        {
+            "country": "Estonia",
+            "domain": "ikea.ee",
+            "languages": [
+                {
+                    "code": "et",
+                    "name": "Eesti",
+                    "url": "https://www.ikea.ee/et/"
+                },
+                {
+                    "code": "ru",
+                    "name": "Pусский (Russian)",
+                    "url": "https://www.ikea.ee/ru/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.ee/en/"
+                }
+            ]
+        },
+        {
+            "country": "Latvia",
+            "domain": "ikea.lv",
+            "languages": [
+                {
+                    "code": "lv",
+                    "name": "Latviešu Valoda",
+                    "url": "https://www.ikea.lv/lv/"
+                },
+                {
+                    "code": "ru",
+                    "name": "Pусский (Russian)",
+                    "url": "https://www.ikea.lv/ru/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.lv/en/"
+                }
+            ]
+        },
+        {
+            "country": "Slovenia",
+            "domain": "ikea.si",
+            "languages": [
+                {
+                    "code": "sl",
+                    "name": "Slovene",
+                    "url": "https://www.ikea.com/si/sl/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/si/en/"
+                }
+            ]
+        },
+        {
+            "country": "Malaysia",
+            "domain": "ikea.my",
+            "languages": [
+                {
+                    "code": "ms",
+                    "name": "Bahasa Melayu",
+                    "url": "https://www.ikea.com/my/ms/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/my/en/"
+                }
+            ]
+        },
+        {
+            "country": "Taiwan",
+            "domain": "ikea.com.tw",
+            "languages": [
+                {
+                    "code": "zh",
+                    "name": "中文 (Zhōngwén)",
+                    "url": "https://www.ikea.com.tw/zh"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com.tw/en"
+                }
+            ]
+        },
+        {
+            "country": "Romania",
+            "domain": "ikea.ro",
+            "languages": [
+                {
+                    "code": "ro",
+                    "name": "Românã",
+                    "url": "https://www.ikea.com/ro/ro/"
+                }
+            ]
+        },
+        {
+            "country": "Ireland",
+            "domain": "ikea.ie",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ie/en/"
+                }
+            ]
+        },
+        {
+            "country": "Italy",
+            "domain": "ikea.it",
+            "languages": [
+                {
+                    "code": "it",
+                    "name": "Italiano",
+                    "url": "https://www.ikea.com/it/it/"
+                }
+            ]
+        },
+        {
+            "country": "France",
+            "domain": "ikea.fr",
+            "languages": [
+                {
+                    "code": "fr",
+                    "name": "Français",
+                    "url": "https://www.ikea.com/fr/fr/"
+                }
+            ]
+        },
+        {
+            "country": "Austria",
+            "domain": "ikea.at",
+            "languages": [
+                {
+                    "code": "de",
+                    "name": "Deutsch",
+                    "url": "https://www.ikea.com/at/de/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/at/en/"
+                }
+            ]
+        },
+        {
+            "country": "Ukraine",
+            "domain": "ikea.ua",
+            "languages": [
+                {
+                    "code": "uk",
+                    "name": "Українська (Ukrajins'ka)",
+                    "url": "https://www.ikea.com/ua/uk/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/ua/en/"
+                }
+            ]
+        },
+        {
+            "country": "Mexico",
+            "domain": "ikea.mx",
+            "languages": [
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.com/mx/es/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/mx/en/"
+                }
+            ]
+        },
+        {
+            "country": "India",
+            "domain": "ikea.in",
+            "languages": [
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/in/en/"
+                }
+            ]
+        },
+        {
+            "country": "Netherlands",
+            "domain": "ikea.nl",
+            "languages": [
+                {
+                    "code": "nl",
+                    "name": "Nederlands",
+                    "url": "https://www.ikea.com/nl/nl/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/nl/en/"
+                }
+            ]
+        },
+        {
+            "country": "Chile",
+            "domain": "ikea.cl",
+            "languages": [
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.com/cl/es/"
+                },
+                {
+                    "code": "en",
+                    "name": "English",
+                    "url": "https://www.ikea.com/cl/en/"
+                }
+            ]
+        },
+        {
+            "country": "Colombia",
+            "domain": "ikea.co",
+            "languages": [
+                {
+                    "code": "es",
+                    "name": "Español",
+                    "url": "https://www.ikea.com/co/es/"
+                }
+            ]
+        }
+    ]
+}

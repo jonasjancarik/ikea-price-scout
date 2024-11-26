@@ -7,8 +7,8 @@
     "test": "jest --runInBand",
     "build:dev": "rimraf dev-dist && tsc --project tsconfig.dev.json; npm run copy:dev",
     "build:prod": "rimraf dist && tsc --project tsconfig.prod.json; npm run copy:prod",
-    "copy:dev": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist/",
-    "copy:prod": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
+    "copy:dev": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist/; mkdir -p dev-dist/data && cp src/data/* dev-dist/data/",
+    "copy:prod": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/; mkdir -p dist/data && cp src/data/* dist/data/",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "format": "prettier --write 'src/**/*.{js,ts,json,css,html}'",
     "prepare": "husky"

@@ -8,8 +8,8 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            width: 300px;
-            padding: 10px;
+            width: 350px;
+            padding: 15px;
         }
 
         h1 {
@@ -17,26 +17,88 @@
             margin-bottom: 15px;
         }
 
+        .step {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .step.active {
+            display: block;
+        }
+
         .country-option {
             margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        .suggested-countries {
+            background-color: #f5f5f5;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .suggested-countries h3 {
+            margin-top: 0;
+            font-size: 14px;
+            color: #666;
         }
 
         button {
             margin-top: 15px;
-            padding: 5px 10px;
+            padding: 8px 15px;
+            background-color: #0051ba;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #003d8f;
+        }
+
+        #countrySearch {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
 
         #statusMessage {
             margin-top: 10px;
             font-weight: bold;
         }
+
+        .step-indicator {
+            margin-bottom: 20px;
+            color: #666;
+        }
     </style>
 </head>
 
 <body>
     <h1>IKEA Price Scout - Nastavení</h1>
-    <div id="countryOptions"></div>
-    <button id="saveButton">Uložit nastavení</button>
+    
+    <div id="step1" class="step active">
+        <div class="step-indicator">Krok 1/2: Vyberte vaši domovskou zemi</div>
+        <input type="text" id="homeCountrySearch" placeholder="Hledat zemi...">
+        <div id="homeCountryOptions"></div>
+        <button id="nextButton">Pokračovat</button>
+    </div>
+
+    <div id="step2" class="step">
+        <div class="step-indicator">Krok 2/2: Vyberte země pro porovnání</div>
+        <div id="suggestedCountries" class="suggested-countries">
+            <h3>Doporučené sousední země:</h3>
+            <div id="neighboringCountries"></div>
+        </div>
+        <input type="text" id="compareCountrySearch" placeholder="Hledat další země...">
+        <div id="otherCountries"></div>
+        <button id="saveButton">Uložit nastavení</button>
+    </div>
+
     <div id="statusMessage"></div>
     <script src="popup.js"></script>
 </body>

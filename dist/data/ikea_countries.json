@@ -1,0 +1,433 @@
+{
+    "Europe": [
+        {
+            "name": "United Kingdom",
+            "neighbors": [
+                "Ireland"
+            ]
+        },
+        {
+            "name": "Ireland",
+            "neighbors": [
+                "United Kingdom"
+            ]
+        },
+        {
+            "name": "France",
+            "neighbors": [
+                "Belgium",
+                "Germany",
+                "Switzerland",
+                "Italy",
+                "Spain"
+            ]
+        },
+        {
+            "name": "Netherlands",
+            "neighbors": [
+                "Belgium",
+                "Germany"
+            ]
+        },
+        {
+            "name": "Belgium",
+            "neighbors": [
+                "France",
+                "Netherlands",
+                "Germany"
+            ]
+        },
+        {
+            "name": "Germany",
+            "neighbors": [
+                "Netherlands",
+                "Belgium",
+                "France",
+                "Switzerland",
+                "Austria",
+                "Czech Republic",
+                "Poland"
+            ]
+        },
+        {
+            "name": "Austria",
+            "neighbors": [
+                "Germany",
+                "Czech Republic",
+                "Slovakia",
+                "Hungary",
+                "Slovenia",
+                "Italy",
+                "Switzerland"
+            ]
+        },
+        {
+            "name": "Switzerland",
+            "neighbors": [
+                "France",
+                "Germany",
+                "Austria",
+                "Italy"
+            ]
+        },
+        {
+            "name": "Norway",
+            "neighbors": [
+                "Sweden",
+                "Finland"
+            ]
+        },
+        {
+            "name": "Sweden",
+            "neighbors": [
+                "Norway",
+                "Finland"
+            ]
+        },
+        {
+            "name": "Finland",
+            "neighbors": [
+                "Norway",
+                "Sweden",
+                "Estonia"
+            ]
+        },
+        {
+            "name": "Denmark",
+            "neighbors": [
+                "Germany"
+            ]
+        },
+        {
+            "name": "Iceland",
+            "neighbors": []
+        },
+        {
+            "name": "Estonia",
+            "neighbors": [
+                "Latvia"
+            ]
+        },
+        {
+            "name": "Latvia",
+            "neighbors": [
+                "Estonia",
+                "Lithuania"
+            ]
+        },
+        {
+            "name": "Lithuania",
+            "neighbors": [
+                "Latvia",
+                "Poland"
+            ]
+        },
+        {
+            "name": "Portugal",
+            "neighbors": [
+                "Spain"
+            ]
+        },
+        {
+            "name": "Spain",
+            "neighbors": [
+                "Portugal",
+                "France"
+            ]
+        },
+        {
+            "name": "Italy",
+            "neighbors": [
+                "France",
+                "Switzerland",
+                "Austria",
+                "Slovenia"
+            ]
+        },
+        {
+            "name": "Greece",
+            "neighbors": [
+                "Bulgaria"
+            ]
+        },
+        {
+            "name": "Cyprus",
+            "neighbors": []
+        },
+        {
+            "name": "Slovenia",
+            "neighbors": [
+                "Italy",
+                "Austria",
+                "Hungary",
+                "Croatia"
+            ]
+        },
+        {
+            "name": "Croatia",
+            "neighbors": [
+                "Slovenia",
+                "Hungary",
+                "Serbia"
+            ]
+        },
+        {
+            "name": "Poland",
+            "neighbors": [
+                "Germany",
+                "Czech Republic",
+                "Slovakia",
+                "Ukraine",
+                "Lithuania"
+            ]
+        },
+        {
+            "name": "Czech Republic",
+            "neighbors": [
+                "Germany",
+                "Poland",
+                "Slovakia",
+                "Austria"
+            ]
+        },
+        {
+            "name": "Slovakia",
+            "neighbors": [
+                "Poland",
+                "Czech Republic",
+                "Austria",
+                "Hungary",
+                "Ukraine"
+            ]
+        },
+        {
+            "name": "Hungary",
+            "neighbors": [
+                "Austria",
+                "Slovakia",
+                "Ukraine",
+                "Romania",
+                "Serbia",
+                "Croatia",
+                "Slovenia"
+            ]
+        },
+        {
+            "name": "Romania",
+            "neighbors": [
+                "Hungary",
+                "Ukraine",
+                "Serbia",
+                "Bulgaria"
+            ]
+        },
+        {
+            "name": "Bulgaria",
+            "neighbors": [
+                "Romania",
+                "Serbia",
+                "Greece"
+            ]
+        },
+        {
+            "name": "Serbia",
+            "neighbors": [
+                "Hungary",
+                "Romania",
+                "Bulgaria",
+                "Croatia"
+            ]
+        },
+        {
+            "name": "Ukraine",
+            "neighbors": [
+                "Poland",
+                "Slovakia",
+                "Hungary",
+                "Romania"
+            ]
+        }
+    ],
+    "Asia": [
+        {
+            "name": "China",
+            "neighbors": [
+                "Hong Kong"
+            ]
+        },
+        {
+            "name": "Japan",
+            "neighbors": []
+        },
+        {
+            "name": "South Korea",
+            "neighbors": []
+        },
+        {
+            "name": "Taiwan",
+            "neighbors": []
+        },
+        {
+            "name": "Hong Kong",
+            "neighbors": [
+                "China"
+            ]
+        },
+        {
+            "name": "Thailand",
+            "neighbors": [
+                "Malaysia"
+            ]
+        },
+        {
+            "name": "Indonesia",
+            "neighbors": [
+                "Malaysia"
+            ]
+        },
+        {
+            "name": "Malaysia",
+            "neighbors": [
+                "Thailand",
+                "Indonesia",
+                "Singapore"
+            ]
+        },
+        {
+            "name": "Philippines",
+            "neighbors": []
+        },
+        {
+            "name": "Singapore",
+            "neighbors": [
+                "Malaysia"
+            ]
+        },
+        {
+            "name": "India",
+            "neighbors": []
+        },
+        {
+            "name": "Turkey",
+            "neighbors": []
+        },
+        {
+            "name": "Israel",
+            "neighbors": [
+                "Jordan"
+            ]
+        },
+        {
+            "name": "Jordan",
+            "neighbors": [
+                "Israel",
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Kuwait",
+            "neighbors": [
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Bahrain",
+            "neighbors": []
+        },
+        {
+            "name": "Qatar",
+            "neighbors": [
+                "Saudi Arabia",
+                "United Arab Emirates"
+            ]
+        },
+        {
+            "name": "United Arab Emirates",
+            "neighbors": [
+                "Oman",
+                "Saudi Arabia",
+                "Qatar"
+            ]
+        },
+        {
+            "name": "Oman",
+            "neighbors": [
+                "United Arab Emirates",
+                "Saudi Arabia"
+            ]
+        },
+        {
+            "name": "Saudi Arabia",
+            "neighbors": [
+                "Jordan",
+                "Kuwait",
+                "Qatar",
+                "United Arab Emirates",
+                "Oman"
+            ]
+        }
+    ],
+    "North_America": [
+        {
+            "name": "Canada",
+            "neighbors": [
+                "United States"
+            ]
+        },
+        {
+            "name": "United States",
+            "neighbors": [
+                "Canada",
+                "Mexico"
+            ]
+        },
+        {
+            "name": "Mexico",
+            "neighbors": [
+                "United States"
+            ]
+        },
+        {
+            "name": "Puerto Rico",
+            "neighbors": [
+                "Dominican Republic"
+            ]
+        },
+        {
+            "name": "Dominican Republic",
+            "neighbors": [
+                "Puerto Rico"
+            ]
+        }
+    ],
+    "South_America": [
+        {
+            "name": "Colombia",
+            "neighbors": []
+        },
+        {
+            "name": "Chile",
+            "neighbors": []
+        }
+    ],
+    "Africa": [
+        {
+            "name": "Morocco",
+            "neighbors": []
+        },
+        {
+            "name": "Egypt",
+            "neighbors": []
+        }
+    ],
+    "Oceania": [
+        {
+            "name": "Australia",
+            "neighbors": []
+        },
+        {
+            "name": "New Zealand",
+            "neighbors": []
+        }
+    ]
+}
