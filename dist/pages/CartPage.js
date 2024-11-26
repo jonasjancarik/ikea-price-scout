@@ -1,7 +1,7 @@
 import { Cart } from '../models/Cart.js';
 import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
-import { Selectors } from '../selectors/selectors.js';
+import { SelectorsService } from '../services/SelectorsService.js';
 import { IkeaPriceUtils } from '../utils/PriceUtils.js';
 import { ErrorUtils } from '../utils/ErrorUtils.js';
 export class CartPage {
@@ -16,7 +16,8 @@ export class CartPage {
     }
     async initialize() {
         try {
-            await this.compareCartPrices(); // Initial comparison
+            this.selectors = await SelectorsService.getSelectors();
+            await this.compareCartPrices();
             this.setupCartObserver();
             this.attachCartEventListeners();
         }
@@ -33,11 +34,11 @@ export class CartPage {
             console.log("Cart state changed or initial load, updating comparisons");
             try {
                 this.cart = new Cart();
-                const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+                const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
                 this.updateLoadingState(cartItemElements, true);
                 this.showSummaryLoadingIndicator();
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
-                    const productId = itemElement.querySelector(Selectors.cartPage.productLink).href.split('-').pop() || '';
+                    const productId = itemElement.querySelector(this.selectors.cartPage.productLink).href.split('-').pop() || '';
                     const localPrice = this.getLocalPrice(itemElement);
                     const quantity = this.getQuantity(itemElement);
                     const productName = this.getProductName(itemElement);
@@ -61,16 +62,16 @@ export class CartPage {
         }
     }
     getLocalPrice(itemElement) {
-        const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger);
-        if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
-            return parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+        const localPriceIntegerElement = itemElement.querySelector(this.selectors.cartPage.priceInteger);
+        if (!localPriceIntegerElement || itemElement.querySelector(this.selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+            return parseFloat(itemElement.querySelector(this.selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
         }
         else {
             return parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
         }
     }
     getQuantity(itemElement) {
-        const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput);
+        const quantityInput = itemElement.querySelector(this.selectors.cartPage.quantityInput);
         try {
             return parseInt(quantityInput.value);
         }
@@ -80,8 +81,8 @@ export class CartPage {
         }
     }
     getProductName(itemElement) {
-        const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
-        const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
+        const nameElement = itemElement.querySelector(this.selectors.cartPage.nameDecorator);
+        const descriptionElement = itemElement.querySelector(this.selectors.cartPage.description);
         return `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
     }
     updateQuantity(productId, newQuantity) {
@@ -93,9 +94,9 @@ export class CartPage {
         }
     }
     updateItemComparison(item) {
-        const itemElement = document.querySelector(`${Selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(Selectors.cartPage.cartItem);
+        const itemElement = document.querySelector(`${this.selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(this.selectors.cartPage.cartItem);
         if (itemElement) {
-            const comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+            const comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison);
             if (comparisonDiv) {
                 const contentWrapper = comparisonDiv.querySelector('.comparison-content');
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(item);
@@ -112,10 +113,10 @@ export class CartPage {
     }
     updateLoadingState(cartItemElements, isLoading) {
         cartItemElements.forEach((itemElement) => {
-            let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+            let comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison);
             if (!comparisonDiv) {
                 comparisonDiv = this.createComparisonDiv();
-                IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement);
+                IkeaDomUtils.insertAfterElement(this.selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement);
             }
             const contentWrapper = comparisonDiv.querySelector('.comparison-content');
             const loadingIndicator = comparisonDiv.querySelector('.loading-indicator');
@@ -131,7 +132,7 @@ export class CartPage {
     }
     createComparisonDiv() {
         const comparisonDiv = document.createElement('div');
-        comparisonDiv.classList.add(Selectors.cartPage.priceComparison.replace('.', '')); // not sure if the replace is needed
+        comparisonDiv.classList.add(this.selectors.cartPage.priceComparison.replace('.', '')); // not sure if the replace is needed
         comparisonDiv.style.cssText = 'background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px;';
         const contentWrapper = document.createElement('div');
         contentWrapper.classList.add('comparison-content');
@@ -143,13 +144,13 @@ export class CartPage {
         return comparisonDiv;
     }
     updateCartComparisons(cartItems) {
-        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
         cartItemElements.forEach((itemElement) => {
-            const productId = itemElement.querySelector(Selectors.cartPage.productLink).href.split('-').pop() || '';
+            const productId = itemElement.querySelector(this.selectors.cartPage.productLink).href.split('-').pop() || '';
             const cartItem = cartItems.find(item => item.id === productId);
             if (cartItem) {
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(cartItem);
-                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+                let comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison);
                 if (comparisonDiv) {
                     const contentWrapper = comparisonDiv.querySelector('.comparison-content');
                     contentWrapper.innerHTML = comparisonHTML;
@@ -164,12 +165,12 @@ export class CartPage {
         this.storedComparisons.set('cartSummary', summaryHTML);
     }
     reapplyStoredComparisons() {
-        const cartItems = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItems = document.querySelectorAll(this.selectors.cartPage.cartItem);
         cartItems.forEach(itemElement => {
             const productId = itemElement.getAttribute('data-product-id') || '';
             const storedComparison = this.storedComparisons.get(productId);
             if (storedComparison) {
-                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+                let comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison);
                 if (!comparisonDiv) {
                     itemElement.insertAdjacentHTML('beforeend', storedComparison);
                 }
@@ -177,18 +178,18 @@ export class CartPage {
         });
         const storedSummary = this.storedComparisons.get('cartSummary');
         if (storedSummary) {
-            let summaryDiv = document.getElementById(Selectors.summary.container);
+            let summaryDiv = document.getElementById(this.selectors.summary.container);
             if (!summaryDiv) {
                 this.insertSummaryDiv(storedSummary);
             }
         }
     }
     getCartState() {
-        const cartItems = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItems = document.querySelectorAll(this.selectors.cartPage.cartItem);
         console.log("Found", cartItems.length, "cart items");
         const state = Array.from(cartItems).map(item => {
             const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid')?.split('_').pop() : '';
-            const quantityInput = item.querySelector(Selectors.cartPage.quantityInput);
+            const quantityInput = item.querySelector(this.selectors.cartPage.quantityInput);
             const quantity = quantityInput ? quantityInput.value : '1';
             console.log("Cart item:", id, "Quantity:", quantity);
             return `${id}:${quantity}`;
@@ -207,8 +208,8 @@ export class CartPage {
                 cartMutationCount += 1;
             }, 50));
             const attachObserver = () => {
-                const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
-                const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
+                const desktopContainer = document.querySelector(this.selectors.cartContainer.desktop);
+                const mobileContainer = document.querySelector(this.selectors.cartContainer.mobile);
                 const cartContainer = desktopContainer || mobileContainer;
                 if (cartContainer) {
                     this.cartObserver?.observe(cartContainer, { childList: true, subtree: true });
@@ -232,8 +233,8 @@ export class CartPage {
             attemptAttachment();
             const handleResize = this.debounce(() => {
                 console.log("Significant resize detected, checking if reattachment is necessary");
-                const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
-                const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
+                const desktopContainer = document.querySelector(this.selectors.cartContainer.desktop);
+                const mobileContainer = document.querySelector(this.selectors.cartContainer.mobile);
                 const currentContainer = desktopContainer || mobileContainer;
                 if (currentContainer && !currentContainer.contains(this.cartObserver?.takeRecords()[0]?.target)) {
                     console.log("Cart container changed, reattaching observer");
@@ -257,8 +258,8 @@ export class CartPage {
                     }
                 }
             });
-            const cartContainer = document.querySelector(Selectors.cartContainer.desktop) ||
-                document.querySelector(Selectors.cartContainer.mobile);
+            const cartContainer = document.querySelector(this.selectors.cartContainer.desktop) ||
+                document.querySelector(this.selectors.cartContainer.mobile);
             if (cartContainer) {
                 this.resizeObserver.observe(cartContainer);
                 console.log("ResizeObserver attached to cart container");
@@ -275,9 +276,9 @@ export class CartPage {
         console.log("Attaching cart event listeners");
         document.addEventListener('click', (event) => {
             const target = event.target;
-            if (target.parentElement?.matches(`${Selectors.cartPage.quantityDecrease}, ${Selectors.cartPage.quantityIncrease}`)) {
-                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
-                const quantityInput = target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.quantityInput);
+            if (target.parentElement?.matches(`${this.selectors.cartPage.quantityDecrease}, ${this.selectors.cartPage.quantityIncrease}`)) {
+                const productId = (target.closest(this.selectors.cartPage.cartItem)?.querySelector(this.selectors.cartPage.productLink)).href.split('-').pop() || null;
+                const quantityInput = target.closest(this.selectors.cartPage.cartItem)?.querySelector(this.selectors.cartPage.quantityInput);
                 const newQuantity = parseInt(quantityInput.value);
                 if (productId) {
                     this.updateQuantity(productId, newQuantity);
@@ -286,8 +287,8 @@ export class CartPage {
         });
         document.addEventListener('input', this.debounce((event) => {
             const target = event.target;
-            if (target.matches(Selectors.cartPage.quantityInput)) {
-                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink)).href.split('-').pop() || null;
+            if (target.matches(this.selectors.cartPage.quantityInput)) {
+                const productId = (target.closest(this.selectors.cartPage.cartItem)?.querySelector(this.selectors.cartPage.productLink)).href.split('-').pop() || null;
                 const newQuantity = parseInt(target.value);
                 if (productId) {
                     this.cart?.removeItem(productId);
@@ -316,7 +317,7 @@ export class CartPage {
     }
     insertSummaryDiv(summaryHTML) {
         console.log("Inserting summary div");
-        let summaryDiv = document.getElementById(Selectors.summary.container);
+        let summaryDiv = document.getElementById(this.selectors.summary.container);
         if (!summaryDiv) {
             summaryDiv = this.createSummaryDiv();
         }
@@ -326,7 +327,7 @@ export class CartPage {
         contentWrapper.style.display = 'block';
         loadingIndicator.style.display = 'none';
         const insertAttempt = () => {
-            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            const targetElement = document.querySelector(this.selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
                 console.log("Target element found, inserting summary div");
                 targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
@@ -475,10 +476,10 @@ export class CartPage {
         }).length;
     }
     showSummaryLoadingIndicator() {
-        let summaryDiv = document.getElementById(Selectors.summary.container);
+        let summaryDiv = document.getElementById(this.selectors.summary.container);
         if (!summaryDiv) {
             summaryDiv = this.createSummaryDiv();
-            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            const targetElement = document.querySelector(this.selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
                 targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
             }
@@ -489,16 +490,16 @@ export class CartPage {
         loadingIndicator.style.display = 'flex';
     }
     hideAllLoadingIndicators() {
-        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
         this.updateLoadingState(cartItemElements, false);
-        const summaryDiv = document.getElementById(Selectors.summary.container);
+        const summaryDiv = document.getElementById(this.selectors.summary.container);
         if (summaryDiv) {
             DisplayUtils.hideLoadingIndicator(summaryDiv);
         }
     }
     createSummaryDiv() {
         const summaryDiv = document.createElement('div');
-        summaryDiv.id = Selectors.summary.container;
+        summaryDiv.id = this.selectors.summary.container;
         summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
         const contentWrapper = document.createElement('div');
         contentWrapper.classList.add('summary-content');

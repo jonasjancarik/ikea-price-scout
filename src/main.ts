@@ -9,6 +9,8 @@ interface ModuleUrls {
     PriceUtils: string;
     ProductItem: string;
     ErrorUtils: string;
+    SelectorsService: string;
+    Selectors: string;
 }
 
 // Define types for the imported modules
@@ -16,6 +18,7 @@ type IkeaProductPageModule = typeof import('./pages/ProductPage');
 type ExchangeRatesModule = typeof import('./utils/ExchangeRates');
 type CartPageModule = typeof import('./pages/CartPage');
 type ErrorUtilsModule = typeof import('./utils/ErrorUtils');
+type SelectorsServiceModule = typeof import('./services/SelectorsService');
 
 export default async function initializeExtension(moduleUrls: ModuleUrls) {
     const [
@@ -23,16 +26,19 @@ export default async function initializeExtension(moduleUrls: ModuleUrls) {
         { ExchangeRates },
         { CartPage },
         { ErrorUtils },
+        { SelectorsService },
     ]: [
             IkeaProductPageModule,
             ExchangeRatesModule,
             CartPageModule,
-            ErrorUtilsModule
+            ErrorUtilsModule,
+            SelectorsServiceModule
         ] = await Promise.all([
             import(moduleUrls.ProductPage),
             import(moduleUrls.ExchangeRates),
             import(moduleUrls.CartPage),
             import(moduleUrls.ErrorUtils),
+            import(moduleUrls.SelectorsService),
         ]);
 
     let cartPage: InstanceType<typeof CartPage> | null = null;

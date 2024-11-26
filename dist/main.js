@@ -1,9 +1,10 @@
 export default async function initializeExtension(moduleUrls) {
-    const [{ IkeaProductPage }, { ExchangeRates }, { CartPage }, { ErrorUtils },] = await Promise.all([
+    const [{ IkeaProductPage }, { ExchangeRates }, { CartPage }, { ErrorUtils }, { SelectorsService },] = await Promise.all([
         import(moduleUrls.ProductPage),
         import(moduleUrls.ExchangeRates),
         import(moduleUrls.CartPage),
         import(moduleUrls.ErrorUtils),
+        import(moduleUrls.SelectorsService),
     ]);
     let cartPage = null;
     try {

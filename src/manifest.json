@@ -8,7 +8,8 @@
   ],
   "host_permissions": [
     "https://*.ikea.com/cz/cs/*",
-    "https://www.cnb.cz/*"
+    "https://www.cnb.cz/*",
+    "https://raw.githubusercontent.com/jonasjancarik/ikea-price-scout/*"
   ],
   "background": {
     "service_worker": "background.js",

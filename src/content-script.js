@@ -3,6 +3,7 @@
 (async () => {
     const moduleUrls = {
         main: chrome.runtime.getURL('main.js'),
+        SelectorsService: chrome.runtime.getURL('services/SelectorsService.js'),
         ProductPage: chrome.runtime.getURL('pages/ProductPage.js'),
         CartPage: chrome.runtime.getURL('pages/CartPage.js'),
         Cart: chrome.runtime.getURL('models/Cart.js'),
@@ -12,6 +13,7 @@
         DomUtils: chrome.runtime.getURL('utils/DomUtils.js'),
         PriceUtils: chrome.runtime.getURL('utils/PriceUtils.js'),
         ErrorUtils: chrome.runtime.getURL('utils/ErrorUtils.js'),
+        Selectors: chrome.runtime.getURL('selectors/selectors.json')
     };
 
     const main = await import(moduleUrls.main);
