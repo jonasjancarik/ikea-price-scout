@@ -17,7 +17,8 @@
         "primaryCurrencyPrice": ".cart-ingka-price-module__primary-currency-price",
         "quantityDecrease": ".cart-ingka-quantity-stepper__decrease",
         "quantityIncrease": ".cart-ingka-quantity-stepper__increase",
-        "priceModuleAddon": ".cart-ingka-price-module__addon"
+        "priceModuleAddon": ".cart-ingka-price-module__addon",
+        "ikeaFamilyCommercialMessage": ".cart-ingka-commercial-message--subtle--family"
     },
     "cartContainer": {
         "desktop": "[class^=\"_contentGrid_\"]",

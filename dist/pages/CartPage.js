@@ -34,6 +34,17 @@ export class CartPage {
             console.log("Cart state changed or initial load, updating comparisons");
             try {
                 this.cart = new Cart();
+                const familyPriceElements = document.querySelectorAll(this.selectors.cartPage.ikeaFamilyCommercialMessage);
+                if (familyPriceElements.length > 0) {
+                    const errorDiv = DisplayUtils.showError('Na některé položky v košíku je sleva pro IKEA Family. Plná cena je u nich porovnána se zvýhodněnou cenou v jiných zemích. Pro správné srovnání se prosím přihlaste do svého IKEA účtu.');
+                    const cartContainer = document.querySelector(this.selectors.cartContainer.desktop) ||
+                        document.querySelector(this.selectors.cartContainer.mobile);
+                    if (cartContainer) {
+                        cartContainer.insertBefore(errorDiv, cartContainer.firstChild);
+                    }
+                    // this.hideAllLoadingIndicators();
+                    // return;
+                }
                 const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
                 this.updateLoadingState(cartItemElements, true);
                 this.showSummaryLoadingIndicator();
