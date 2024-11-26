@@ -1,5 +1,5 @@
 // IkeaPriceUtils.ts
-import { ExchangeRates } from './ExchangeRates.js';
+import { ExchangeRates } from '../services/ExchangeRatesService.js';
 import { SelectorsService } from '../services/SelectorsService.js';
 export const IkeaPriceUtils = {
     comparisonCountries: [

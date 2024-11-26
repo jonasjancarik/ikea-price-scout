@@ -1,4 +1,3 @@
-// exchange-rates.ts
 export const ExchangeRates = {
     exchangeRates: {},
     async getExchangeRates() {
