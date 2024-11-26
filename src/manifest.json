@@ -7,7 +7,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://*.ikea.com/cz/cs/*",
+    "https://*.ikea.com/cz/*",
     "https://www.cnb.cz/*",
     "https://raw.githubusercontent.com/jonasjancarik/ikea-price-scout/*"
   ],
@@ -18,8 +18,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.ikea.com/cz/cs/p/*",
-        "https://*.ikea.com/cz/cs/shoppingcart/"
+        "https://*.ikea.com/cz/*/p/*",
+        "https://*.ikea.com/cz/*/shoppingcart/"
       ],
       "js": [
         "content-script.js"
