@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "IKEA Price Scout",
-  "version": "0.5.0",
-  "description": "Compare IKEA product prices across different country websites. Currently works for Czechia only.",
+  "version": "0.5.1",
+  "description": "Compare IKEA product prices across different country websites. Currently works for Czechia only, more countries coming soon.",
   "permissions": [
     "storage"
   ],

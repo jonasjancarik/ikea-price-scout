@@ -3,7 +3,7 @@ export const SelectorsService = {
         selectors: null as any,
         GITHUB_URL: 'https://raw.githubusercontent.com/jonasjancarik/ikea-price-scout/main/dist/selectors/selectors.json',
         LOCAL_URL: chrome.runtime.getURL('selectors/selectors.json'),
-        CACHE_DURATION: 24 * 60 * 60 * 1000, // 24 hours
+        CACHE_DURATION: 1 * 60 * 1000, // 1 minute - we don't want to cache for too long because it would prolong the time it takes to load fixed selectors
 
         async checkIfDev(): Promise<boolean> {
             try {
