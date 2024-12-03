@@ -11,7 +11,9 @@
     "copy:prod": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "format": "prettier --write 'src/**/*.{js,ts,json,css,html}'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "zip": "cd dist && zip -r ../ikea-price-scout.zip * -x \"*.DS_Store\"",
+    "package": "npm run build:prod && npm run zip"
   },
   "keywords": [],
   "author": "Jonáš Jančařík",
