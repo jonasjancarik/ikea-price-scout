@@ -17,6 +17,17 @@
       "preLaunchTask": "build:dev"
     },
     {
+      "type": "firefox",
+      "request": "launch",
+      "name": "Launch Firefox with Extension",
+      "reAttach": true,
+      "addonPath": "${workspaceFolder}/dev-dist-firefox",
+      "url": "https://www.ikea.com/cz/cs/shoppingcart/",
+      "webRoot": "${workspaceFolder}/src",
+      // "sourceMaps": true,
+      "preLaunchTask": "build:dev:firefox"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Debug Puppeteer Tests",

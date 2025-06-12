@@ -8,6 +8,14 @@
 			"problemMatcher": [],
 			"label": "build:dev",
 			"detail": "rimraf dist && tsc --project tsconfig.dev.json; npm run copy"
+		},
+		{
+			"type": "npm",
+			"script": "build:dev:firefox",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "build:dev:firefox",
+			"detail": "rimraf dev-dist-firefox && tsc --project tsconfig.dev.json; npm run copy:dev:firefox"
 		}
 	]
 }
