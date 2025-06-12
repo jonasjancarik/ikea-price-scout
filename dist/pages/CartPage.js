@@ -341,7 +341,7 @@ export class CartPage {
             const targetElement = document.querySelector(this.selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
                 console.log("Target element found, inserting summary div");
-                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+                targetElement.appendChild(summaryDiv);
             }
             else {
                 console.log("Target element for summary not found, retrying in 500ms");
@@ -492,7 +492,7 @@ export class CartPage {
             summaryDiv = this.createSummaryDiv();
             const targetElement = document.querySelector(this.selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
-                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+                targetElement.parentNode.appendChild(summaryDiv);
             }
         }
         const contentWrapper = summaryDiv.querySelector('.summary-content');

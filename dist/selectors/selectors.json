@@ -26,6 +26,6 @@
     },
     "summary": {
         "container": "price-scout-comparison-summary",
-        "insertTarget": "[class^=\"_checkoutInformation_\"]"
+        "insertTarget": "[class^=\"_sidebarGrid\"] [class^=\"_sidebar\"]"
     }
 }
