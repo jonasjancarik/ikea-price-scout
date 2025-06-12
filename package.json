@@ -7,13 +7,22 @@
     "test": "jest --runInBand",
     "build:dev": "rimraf dev-dist && tsc --project tsconfig.dev.json; npm run copy:dev",
     "build:prod": "rimraf dist && tsc --project tsconfig.prod.json; npm run copy:prod",
+    "build:dev:firefox": "rimraf dev-dist-firefox && tsc --project tsconfig.dev.json; npm run copy:dev:firefox",
+    "build:prod:firefox": "rimraf dist-firefox && tsc --project tsconfig.prod.json; npm run copy:prod:firefox",
     "copy:dev": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist/",
     "copy:prod": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
+    "copy:dev:firefox": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist-firefox/ && cp src/manifest-firefox.json dev-dist-firefox/manifest.json",
+    "copy:prod:firefox": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dist-firefox/ && cp src/manifest-firefox.json dist-firefox/manifest.json",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "format": "prettier --write 'src/**/*.{js,ts,json,css,html}'",
     "prepare": "husky",
-    "zip": "cd dist && zip -r ../ikea-price-scout.zip * -x \"*.DS_Store\"",
-    "package": "npm run build:prod && npm run zip"
+    "zip": "cd dist && zip -r ../ikea-price-scout-chrome.zip * -x \"*.DS_Store\"",
+    "zip:firefox": "cd dist-firefox && zip -r ../ikea-price-scout-firefox.zip * -x \"*.DS_Store\"",
+    "package": "npm run build:prod && npm run zip",
+    "package:firefox": "npm run build:prod:firefox && npm run zip:firefox",
+    "package:all": "npm run package && npm run package:firefox",
+    "dev:firefox": "npm run build:dev:firefox && web-ext run --source-dir=dev-dist-firefox",
+    "lint:firefox": "npm run build:dev:firefox && web-ext lint --source-dir=dev-dist-firefox"
   },
   "keywords": [],
   "author": "Jonáš Jančařík",
@@ -22,6 +31,7 @@
     "@types/chrome": "^0.0.269",
     "@types/jest": "^29.5.12",
     "@types/puppeteer": "^5.4.7",
+    "@types/webextension-polyfill": "^0.12.3",
     "@typescript-eslint/eslint-plugin": "^8.0.1",
     "@typescript-eslint/parser": "^8.0.1",
     "cpx": "^1.5.0",
@@ -31,6 +41,8 @@
     "jest-puppeteer": "^10.1.1",
     "puppeteer": "^23.3.0",
     "rimraf": "^6.0.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "web-ext": "^8.7.1",
+    "webextension-polyfill": "^0.12.0"
   }
 }
