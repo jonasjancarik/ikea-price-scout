@@ -1,7 +1,5 @@
 .DS_Store
 dev-dist
 dev-dist-firefox
-dist
-dist-firefox
 node_modules
 *.zip
