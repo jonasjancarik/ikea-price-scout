@@ -10,7 +10,9 @@ export default async function initializeExtension(moduleUrls) {
         async function initializeExtension() {
             try {
                 console.log("Checking if extension should be initialized");
-                const { selectedCountries } = await chrome.storage.sync.get(['selectedCountries']);
+                // Use the appropriate browser API (chrome or browser)
+                const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+                const { selectedCountries } = await browserAPI.storage.sync.get(['selectedCountries']);
                 if (!selectedCountries || selectedCountries.length === 0) {
                     console.log("No countries selected. Extension will not run.");
                     return;

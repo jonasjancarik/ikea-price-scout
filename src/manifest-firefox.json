@@ -26,7 +26,13 @@
     }
   ],
   "web_accessible_resources": [
-    "*"
+    "*.js",
+    "*.json",
+    "pages/*.js",
+    "models/*.js",
+    "services/*.js",
+    "utils/*.js",
+    "selectors/*.json"
   ],
   "browser_action": {
     "default_popup": "popup.html"
