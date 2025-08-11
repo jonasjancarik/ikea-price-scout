@@ -1,5 +1,3 @@
-// exchange-rates.ts
-
 interface ExchangeRates {
     [currencyCode: string]: number;
 }

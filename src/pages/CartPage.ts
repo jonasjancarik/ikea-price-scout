@@ -2,7 +2,7 @@ import { Cart } from '../models/Cart.js';
 import { ProductItem } from '../models/ProductItem.js';
 import { DisplayUtils } from '../utils/DisplayUtils.js';
 import { IkeaDomUtils } from '../utils/DomUtils.js';
-import { Selectors } from '../selectors/selectors.js';
+import { SelectorsService } from '../services/SelectorsService.js';
 import { IkeaPriceUtils } from '../utils/PriceUtils.js';
 import { ErrorUtils } from '../utils/ErrorUtils.js';
 
@@ -14,10 +14,12 @@ export class CartPage {
     private resizeObserver: ResizeObserver | null = null;
     private entriesSeen = new Set<Element>();
     private lastWidth: number = 0;
+    private selectors: any;
 
     async initialize(): Promise<void> {
         try {
-            await this.compareCartPrices(); // Initial comparison
+            this.selectors = await SelectorsService.getSelectors();
+            await this.compareCartPrices();
             this.setupCartObserver();
             this.attachCartEventListeners();
         } catch (error) {
@@ -38,13 +40,26 @@ export class CartPage {
             console.log("Cart state changed or initial load, updating comparisons");
             try {
                 this.cart = new Cart();
-                const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+                const familyPriceElements = document.querySelectorAll(this.selectors.cartPage.ikeaFamilyCommercialMessage);
+                if (familyPriceElements.length > 0) {
+                    const errorDiv = DisplayUtils.showError(
+                        'Na některé položky v košíku je sleva pro IKEA Family. Plná cena je u nich porovnána se zvýhodněnou cenou v jiných zemích. Pro správné srovnání se prosím přihlaste do svého IKEA účtu.'
+                    );
+                    const cartContainer = document.querySelector(this.selectors.cartContainer.desktop) || 
+                                         document.querySelector(this.selectors.cartContainer.mobile);
+                    if (cartContainer) {
+                        cartContainer.insertBefore(errorDiv, cartContainer.firstChild);
+                    }
+                    // this.hideAllLoadingIndicators();
+                    // return;
+                }
+                const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
 
                 this.updateLoadingState(cartItemElements, true);
                 this.showSummaryLoadingIndicator();
 
                 const cartItemPromises = Array.from(cartItemElements).map(async (itemElement) => {
-                    const productId = (itemElement.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || '';
+                    const productId = (itemElement.querySelector(this.selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || '';
                     const localPrice = this.getLocalPrice(itemElement);
                     const quantity = this.getQuantity(itemElement);
                     const productName = this.getProductName(itemElement);
@@ -73,16 +88,16 @@ export class CartPage {
     }
 
     private getLocalPrice(itemElement: Element): number {
-        const localPriceIntegerElement = itemElement.querySelector(Selectors.cartPage.priceInteger);
-        if (!localPriceIntegerElement || itemElement.querySelector(Selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
-            return parseFloat(itemElement.querySelector(Selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
+        const localPriceIntegerElement = itemElement.querySelector(this.selectors.cartPage.priceInteger);
+        if (!localPriceIntegerElement || itemElement.querySelector(this.selectors.cartPage.priceModuleAddon)?.textContent?.includes('Původní cena')) {
+            return parseFloat(itemElement.querySelector(this.selectors.cartPage.discountedPriceInteger)?.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
         } else {
             return parseFloat(localPriceIntegerElement.textContent?.trim().replace(/[^0-9.,]/g, '') || '0');
         }
     }
 
     private getQuantity(itemElement: Element): number {
-        const quantityInput = itemElement.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
+        const quantityInput = itemElement.querySelector(this.selectors.cartPage.quantityInput) as HTMLInputElement;
         try {
             return parseInt(quantityInput.value);
         } catch (error) {
@@ -96,8 +111,8 @@ export class CartPage {
     }
 
     private getProductName(itemElement: Element): string {
-        const nameElement = itemElement.querySelector(Selectors.cartPage.nameDecorator);
-        const descriptionElement = itemElement.querySelector(Selectors.cartPage.description);
+        const nameElement = itemElement.querySelector(this.selectors.cartPage.nameDecorator);
+        const descriptionElement = itemElement.querySelector(this.selectors.cartPage.description);
         return `${nameElement?.textContent?.trim()} - ${descriptionElement?.textContent?.trim()}`;
     }
 
@@ -111,9 +126,9 @@ export class CartPage {
     }
 
     private updateItemComparison(item: ProductItem): void {
-        const itemElement = document.querySelector(`${Selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(Selectors.cartPage.cartItem);
+        const itemElement = document.querySelector(`${this.selectors.cartPage.cartItem} [href$="-${item.id}/"]`)?.closest(this.selectors.cartPage.cartItem);
         if (itemElement) {
-            const comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison) as HTMLElement;
+            const comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison) as HTMLElement;
             if (comparisonDiv) {
                 const contentWrapper = comparisonDiv.querySelector('.comparison-content') as HTMLElement;
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(item);
@@ -132,10 +147,10 @@ export class CartPage {
 
     private updateLoadingState(cartItemElements: NodeListOf<Element>, isLoading: boolean): void {
         cartItemElements.forEach((itemElement) => {
-            let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison) as HTMLElement;
+            let comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison) as HTMLElement;
             if (!comparisonDiv) {
                 comparisonDiv = this.createComparisonDiv();
-                IkeaDomUtils.insertAfterElement(Selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement as HTMLElement);
+                IkeaDomUtils.insertAfterElement(this.selectors.cartPage.primaryCurrencyPrice, comparisonDiv, itemElement as HTMLElement);
             }
 
             const contentWrapper = comparisonDiv.querySelector('.comparison-content') as HTMLElement;
@@ -153,7 +168,7 @@ export class CartPage {
 
     private createComparisonDiv(): HTMLElement {
         const comparisonDiv = document.createElement('div');
-        comparisonDiv.classList.add(Selectors.cartPage.priceComparison.replace('.', ''));  // not sure if the replace is needed
+        comparisonDiv.classList.add(this.selectors.cartPage.priceComparison.replace('.', ''));  // not sure if the replace is needed
         comparisonDiv.style.cssText = 'background-color: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px;';
 
         const contentWrapper = document.createElement('div');
@@ -170,13 +185,13 @@ export class CartPage {
     }
 
     private updateCartComparisons(cartItems: ProductItem[]): void {
-        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
         cartItemElements.forEach((itemElement) => {
-            const productId = (itemElement.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || '';
+            const productId = (itemElement.querySelector(this.selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || '';
             const cartItem = cartItems.find(item => item.id === productId);
             if (cartItem) {
                 const comparisonHTML = DisplayUtils.generateComparisonHTML(cartItem);
-                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison) as HTMLElement;
+                let comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison) as HTMLElement;
                 if (comparisonDiv) {
                     const contentWrapper = comparisonDiv.querySelector('.comparison-content') as HTMLElement;
                     contentWrapper.innerHTML = comparisonHTML;
@@ -194,12 +209,12 @@ export class CartPage {
     }
 
     private reapplyStoredComparisons(): void {
-        const cartItems = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItems = document.querySelectorAll(this.selectors.cartPage.cartItem);
         cartItems.forEach(itemElement => {
             const productId = itemElement.getAttribute('data-product-id') || '';
             const storedComparison = this.storedComparisons.get(productId);
             if (storedComparison) {
-                let comparisonDiv = itemElement.querySelector(Selectors.cartPage.priceComparison);
+                let comparisonDiv = itemElement.querySelector(this.selectors.cartPage.priceComparison);
                 if (!comparisonDiv) {
                     itemElement.insertAdjacentHTML('beforeend', storedComparison);
                 }
@@ -208,7 +223,7 @@ export class CartPage {
 
         const storedSummary = this.storedComparisons.get('cartSummary');
         if (storedSummary) {
-            let summaryDiv = document.getElementById(Selectors.summary.container);
+            let summaryDiv = document.getElementById(this.selectors.summary.container);
             if (!summaryDiv) {
                 this.insertSummaryDiv(storedSummary);
             }
@@ -216,11 +231,11 @@ export class CartPage {
     }
 
     private getCartState(): string {
-        const cartItems = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItems = document.querySelectorAll(this.selectors.cartPage.cartItem);
         console.log("Found", cartItems.length, "cart items");
         const state = Array.from(cartItems).map(item => {
             const id = item.firstElementChild ? item.firstElementChild.getAttribute('data-testid')?.split('_').pop() : '';
-            const quantityInput = item.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
+            const quantityInput = item.querySelector(this.selectors.cartPage.quantityInput) as HTMLInputElement;
             const quantity = quantityInput ? quantityInput.value : '1';
             console.log("Cart item:", id, "Quantity:", quantity);
             return `${id}:${quantity}`;
@@ -242,8 +257,8 @@ export class CartPage {
             }, 50));
 
             const attachObserver = (): boolean => {
-                const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
-                const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
+                const desktopContainer = document.querySelector(this.selectors.cartContainer.desktop);
+                const mobileContainer = document.querySelector(this.selectors.cartContainer.mobile);
                 const cartContainer = desktopContainer || mobileContainer;
 
                 if (cartContainer) {
@@ -273,8 +288,8 @@ export class CartPage {
 
             const handleResize = this.debounce(() => {
                 console.log("Significant resize detected, checking if reattachment is necessary");
-                const desktopContainer = document.querySelector(Selectors.cartContainer.desktop);
-                const mobileContainer = document.querySelector(Selectors.cartContainer.mobile);
+                const desktopContainer = document.querySelector(this.selectors.cartContainer.desktop);
+                const mobileContainer = document.querySelector(this.selectors.cartContainer.mobile);
                 const currentContainer = desktopContainer || mobileContainer;
 
                 if (currentContainer && !currentContainer.contains(this.cartObserver?.takeRecords()[0]?.target as Node)) {
@@ -301,8 +316,8 @@ export class CartPage {
                 }
             });
 
-            const cartContainer = document.querySelector(Selectors.cartContainer.desktop) ||
-                document.querySelector(Selectors.cartContainer.mobile);
+            const cartContainer = document.querySelector(this.selectors.cartContainer.desktop) ||
+                document.querySelector(this.selectors.cartContainer.mobile);
 
             if (cartContainer) {
                 this.resizeObserver.observe(cartContainer);
@@ -324,9 +339,9 @@ export class CartPage {
 
         document.addEventListener('click', (event: Event) => {
             const target = event.target as HTMLElement;
-            if (target.parentElement?.matches(`${Selectors.cartPage.quantityDecrease}, ${Selectors.cartPage.quantityIncrease}`)) {
-                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
-                const quantityInput = target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.quantityInput) as HTMLInputElement;
+            if (target.parentElement?.matches(`${this.selectors.cartPage.quantityDecrease}, ${this.selectors.cartPage.quantityIncrease}`)) {
+                const productId = (target.closest(this.selectors.cartPage.cartItem)?.querySelector(this.selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
+                const quantityInput = target.closest(this.selectors.cartPage.cartItem)?.querySelector(this.selectors.cartPage.quantityInput) as HTMLInputElement;
                 const newQuantity = parseInt(quantityInput.value);
                 if (productId) {
                     this.updateQuantity(productId, newQuantity);
@@ -336,8 +351,8 @@ export class CartPage {
 
         document.addEventListener('input', this.debounce((event: Event) => {
             const target = event.target as HTMLElement;
-            if (target.matches(Selectors.cartPage.quantityInput)) {
-                const productId = (target.closest(Selectors.cartPage.cartItem)?.querySelector(Selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
+            if (target.matches(this.selectors.cartPage.quantityInput)) {
+                const productId = (target.closest(this.selectors.cartPage.cartItem)?.querySelector(this.selectors.cartPage.productLink) as HTMLAnchorElement).href.split('-').pop() || null;
                 const newQuantity = parseInt((target as HTMLInputElement).value);
                 if (productId) {
                     this.cart?.removeItem(productId);
@@ -368,7 +383,7 @@ export class CartPage {
 
     private insertSummaryDiv(summaryHTML: string) {
         console.log("Inserting summary div");
-        let summaryDiv = document.getElementById(Selectors.summary.container);
+        let summaryDiv = document.getElementById(this.selectors.summary.container);
         if (!summaryDiv) {
             summaryDiv = this.createSummaryDiv();
         }
@@ -380,10 +395,10 @@ export class CartPage {
         loadingIndicator.style.display = 'none';
 
         const insertAttempt = () => {
-            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            const targetElement = document.querySelector(this.selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
                 console.log("Target element found, inserting summary div");
-                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+                targetElement.appendChild(summaryDiv);
             } else {
                 console.log("Target element for summary not found, retrying in 500ms");
                 setTimeout(insertAttempt, 500);
@@ -558,12 +573,12 @@ export class CartPage {
     }
 
     private showSummaryLoadingIndicator(): void {
-        let summaryDiv = document.getElementById(Selectors.summary.container);
+        let summaryDiv = document.getElementById(this.selectors.summary.container);
         if (!summaryDiv) {
             summaryDiv = this.createSummaryDiv();
-            const targetElement = document.querySelector(Selectors.summary.insertTarget);
+            const targetElement = document.querySelector(this.selectors.summary.insertTarget);
             if (targetElement && targetElement.parentNode) {
-                targetElement.parentNode.insertBefore(summaryDiv, targetElement.nextSibling);
+                targetElement.parentNode.appendChild(summaryDiv);
             }
         }
         const contentWrapper = summaryDiv.querySelector('.summary-content') as HTMLElement;
@@ -573,10 +588,10 @@ export class CartPage {
     }
 
     private hideAllLoadingIndicators(): void {
-        const cartItemElements = document.querySelectorAll(Selectors.cartPage.cartItem);
+        const cartItemElements = document.querySelectorAll(this.selectors.cartPage.cartItem);
         this.updateLoadingState(cartItemElements, false);
 
-        const summaryDiv = document.getElementById(Selectors.summary.container);
+        const summaryDiv = document.getElementById(this.selectors.summary.container);
         if (summaryDiv) {
             DisplayUtils.hideLoadingIndicator(summaryDiv);
         }
@@ -584,7 +599,7 @@ export class CartPage {
 
     private createSummaryDiv(): HTMLElement {
         const summaryDiv = document.createElement('div');
-        summaryDiv.id = Selectors.summary.container;
+        summaryDiv.id = this.selectors.summary.container;
         summaryDiv.style.cssText = 'background-color: #e6f7ff; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 1.1em;';
 
         const contentWrapper = document.createElement('div');

@@ -1,5 +1,6 @@
 // IkeaPriceUtils.ts
-import { ExchangeRates } from './ExchangeRates.js';
+import { ExchangeRates } from '../services/ExchangeRatesService.js';
+import { SelectorsService } from '../services/SelectorsService.js';
 export const IkeaPriceUtils = {
     comparisonCountries: [
         { country: 'pl', language: 'pl', name: 'Polsko', currencyCode: 'PLN' },
@@ -8,6 +9,7 @@ export const IkeaPriceUtils = {
         { country: 'sk', language: 'sk', name: 'Slovensko', currencyCode: 'EUR' },
     ],
     async fetchForeignPrices(productId) {
+        const selectors = await SelectorsService.getSelectors();
         return Promise.all(this.comparisonCountries.map(async (comp) => {
             const comparisonUrl = `https://www.ikea.com/${comp.country}/${comp.language}/p/-${productId}/`;
             try {
@@ -18,7 +20,7 @@ export const IkeaPriceUtils = {
                 const html = await response.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-                const comparisonPriceElement = doc.querySelector('.pip-temp-price__integer');
+                const comparisonPriceElement = doc.querySelector(selectors.productPage.priceInteger);
                 if (!comparisonPriceElement) {
                     return { ...comp, price: null, isAvailable: false };
                 }

@@ -9,11 +9,13 @@ interface ModuleUrls {
     PriceUtils: string;
     ProductItem: string;
     ErrorUtils: string;
+    SelectorsService: string;
+    Selectors: string;
 }
 
 // Define types for the imported modules
 type IkeaProductPageModule = typeof import('./pages/ProductPage');
-type ExchangeRatesModule = typeof import('./utils/ExchangeRates');
+type ExchangeRatesModule = typeof import('./services/ExchangeRatesService');
 type CartPageModule = typeof import('./pages/CartPage');
 type ErrorUtilsModule = typeof import('./utils/ErrorUtils');
 
@@ -27,7 +29,7 @@ export default async function initializeExtension(moduleUrls: ModuleUrls) {
             IkeaProductPageModule,
             ExchangeRatesModule,
             CartPageModule,
-            ErrorUtilsModule
+            ErrorUtilsModule,
         ] = await Promise.all([
             import(moduleUrls.ProductPage),
             import(moduleUrls.ExchangeRates),

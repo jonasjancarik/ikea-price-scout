@@ -1,17 +1,19 @@
 {
   "name": "ikea-price-scout",
-  "version": "0.4.4",
+  "version": "0.5.2",
   "description": "Chrome extension for comparing prices of Ikea products across different countries (work in progress)",
   "main": "main.js",
   "scripts": {
     "test": "jest --runInBand",
     "build:dev": "rimraf dev-dist && tsc --project tsconfig.dev.json; npm run copy:dev",
     "build:prod": "rimraf dist && tsc --project tsconfig.prod.json; npm run copy:prod",
-    "copy:dev": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist/; mkdir -p dev-dist/data && cp src/data/* dev-dist/data/",
-    "copy:prod": "cpx 'src/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/; mkdir -p dist/data && cp src/data/* dist/data/",
+    "copy:dev": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dev-dist/",
+    "copy:prod": "cpx 'src/**/*.{js,html,css,png,jpg,jpeg,svg,json}' dist/",
     "lint": "eslint 'src/**/*.{js,ts}'",
     "format": "prettier --write 'src/**/*.{js,ts,json,css,html}'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "zip": "cd dist && zip -r ../ikea-price-scout.zip * -x \"*.DS_Store\"",
+    "package": "npm run build:prod && npm run zip"
   },
   "keywords": [],
   "author": "Jonáš Jančařík",
