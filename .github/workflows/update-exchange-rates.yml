@@ -4,6 +4,10 @@ on:
   schedule:
     # Run daily at 10:00 AM UTC (after most central banks update rates)
     - cron: '0 10 * * *'
+  push:
+    branches:
+      - main
+      - add-countries  # For testing - remove before merging
   workflow_dispatch: # Allow manual trigger for testing
     inputs:
       force_update:

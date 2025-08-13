@@ -56,7 +56,9 @@ export const ExchangeRates = {
     },
 
     async fetchFromGitHub(): Promise<ExchangeRates> {
-        const githubUrl = 'https://raw.githubusercontent.com/janca/ikea-price-scout/main/src/data/exchange_rates.json';
+        // TODO: Change back to 'main' before merging to production
+        const branch = 'add-countries'; // For testing - use current branch
+        const githubUrl = `https://raw.githubusercontent.com/janca/ikea-price-scout/${branch}/src/data/exchange_rates.json`;
         
         const response = await fetch(githubUrl, {
             cache: 'no-cache', // Always get fresh data
