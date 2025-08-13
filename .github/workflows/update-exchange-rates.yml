@@ -1,0 +1,219 @@
+name: Update Exchange Rates
+
+on:
+  schedule:
+    # Run daily at 10:00 AM UTC (after most central banks update rates)
+    - cron: '0 10 * * *'
+  workflow_dispatch: # Allow manual trigger for testing
+    inputs:
+      force_update:
+        description: 'Force update even if rates are recent'
+        required: false
+        default: 'false'
+
+jobs:
+  update-rates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Check if update is needed
+        id: check_update
+        run: |
+          # Check if exchange_rates.json exists and is recent (less than 23 hours old)
+          if [ -f "src/data/exchange_rates.json" ] && [ "${{ github.event.inputs.force_update }}" != "true" ]; then
+            last_updated=$(node -e "
+              const fs = require('fs');
+              const data = JSON.parse(fs.readFileSync('src/data/exchange_rates.json', 'utf8'));
+              console.log(data.lastUpdated);
+            ")
+            
+            current_time=$(date -u +%s)
+            last_updated_time=$(date -d "$last_updated" +%s)
+            hours_diff=$(( (current_time - last_updated_time) / 3600 ))
+            
+            if [ $hours_diff -lt 23 ]; then
+              echo "Rates are recent ($hours_diff hours old), skipping update"
+              echo "should_update=false" >> $GITHUB_OUTPUT
+            else
+              echo "Rates are stale ($hours_diff hours old), updating"
+              echo "should_update=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No existing rates or force update requested"
+            echo "should_update=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Fetch exchange rates from primary API
+        if: steps.check_update.outputs.should_update == 'true'
+        id: fetch_primary
+        run: |
+          echo "Fetching from ExchangeRate-API (CZK base)..."
+          
+          # Try to fetch CZK-based rates
+          if curl -s "https://api.exchangerate-api.com/v4/latest/CZK" > temp_rates_primary.json; then
+            # Check if the response is valid JSON and has rates
+            if node -e "
+              const fs = require('fs');
+              try {
+                const data = JSON.parse(fs.readFileSync('temp_rates_primary.json', 'utf8'));
+                if (data.rates && Object.keys(data.rates).length > 30) {
+                  console.log('Primary API success: ' + Object.keys(data.rates).length + ' currencies');
+                  process.exit(0);
+                } else {
+                  console.log('Primary API returned insufficient data');
+                  process.exit(1);
+                }
+              } catch (e) {
+                console.log('Primary API returned invalid JSON');
+                process.exit(1);
+              }
+            "; then
+              echo "primary_success=true" >> $GITHUB_OUTPUT
+            else
+              echo "primary_success=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "primary_success=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Fetch exchange rates from fallback API
+        if: steps.check_update.outputs.should_update == 'true' && steps.fetch_primary.outputs.primary_success == 'false'
+        id: fetch_fallback
+        run: |
+          echo "Primary failed, trying fallback (USD base)..."
+          
+          # Try USD-based rates and convert to CZK base
+          if curl -s "https://api.exchangerate-api.com/v4/latest/USD" > temp_rates_usd.json; then
+            if node -e "
+              const fs = require('fs');
+              try {
+                const data = JSON.parse(fs.readFileSync('temp_rates_usd.json', 'utf8'));
+                if (data.rates && data.rates.CZK && Object.keys(data.rates).length > 30) {
+                  // Convert USD-based rates to CZK-based rates
+                  const czkRate = data.rates.CZK;
+                  const czkBasedRates = {};
+                  
+                  for (const [currency, rate] of Object.entries(data.rates)) {
+                    if (currency === 'USD') {
+                      czkBasedRates[currency] = czkRate;
+                    } else {
+                      czkBasedRates[currency] = czkRate / rate;
+                    }
+                  }
+                  
+                  const convertedData = {
+                    base: 'CZK',
+                    rates: czkBasedRates,
+                    date: data.date
+                  };
+                  
+                  fs.writeFileSync('temp_rates_primary.json', JSON.stringify(convertedData, null, 2));
+                  console.log('Fallback API success: ' + Object.keys(czkBasedRates).length + ' currencies');
+                  process.exit(0);
+                } else {
+                  process.exit(1);
+                }
+              } catch (e) {
+                process.exit(1);
+              }
+            "; then
+              echo "fallback_success=true" >> $GITHUB_OUTPUT
+            else
+              echo "fallback_success=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "fallback_success=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Transform rates to our format
+        if: steps.check_update.outputs.should_update == 'true' && (steps.fetch_primary.outputs.primary_success == 'true' || steps.fetch_fallback.outputs.fallback_success == 'true')
+        run: |
+          node scripts/transform-rates.js
+          
+      - name: Validate transformed rates
+        if: steps.check_update.outputs.should_update == 'true'
+        run: |
+          # Validate the generated file
+          node -e "
+            const fs = require('fs');
+            try {
+              const data = JSON.parse(fs.readFileSync('src/data/exchange_rates.json', 'utf8'));
+              
+              // Check required fields
+              if (!data.lastUpdated || !data.rates || !data.baseCurrency) {
+                throw new Error('Missing required fields');
+              }
+              
+              // Check we have major currencies
+              const required = ['USD', 'EUR', 'GBP', 'JPY'];
+              const missing = required.filter(curr => !data.rates[curr]);
+              if (missing.length > 0) {
+                throw new Error('Missing major currencies: ' + missing.join(', '));
+              }
+              
+              // Check rate count
+              if (Object.keys(data.rates).length < 30) {
+                throw new Error('Too few currencies: ' + Object.keys(data.rates).length);
+              }
+              
+              console.log('✅ Validation passed: ' + Object.keys(data.rates).length + ' currencies');
+            } catch (e) {
+              console.error('❌ Validation failed:', e.message);
+              process.exit(1);
+            }
+          "
+          
+      - name: Check for changes
+        if: steps.check_update.outputs.should_update == 'true'
+        id: check_changes
+        run: |
+          if git diff --quiet src/data/exchange_rates.json; then
+            echo "No changes to exchange rates"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Exchange rates updated"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Commit updated rates
+        if: steps.check_update.outputs.should_update == 'true' && steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Get currency count for commit message
+          currency_count=$(node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('src/data/exchange_rates.json', 'utf8'));
+            console.log(Object.keys(data.rates).length);
+          ")
+          
+          git add src/data/exchange_rates.json
+          git commit -m "chore: update exchange rates (${currency_count} currencies) - $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
+          
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.check_update.outputs.should_update }}" == "false" ]; then
+            echo "✅ Exchange rates are up to date (less than 23 hours old)"
+          elif [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Exchange rates updated successfully"
+          elif [ "${{ steps.check_changes.outputs.has_changes }}" == "false" ]; then
+            echo "✅ Exchange rates fetched but no changes detected"
+          else
+            echo "❌ Failed to update exchange rates"
+            exit 1
+          fi

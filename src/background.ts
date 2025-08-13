@@ -67,8 +67,26 @@ function isTodayCET(timestamp: number): boolean {
     return timestamp >= todayMidnightCET.getTime();
 }
 
+// Function to cache exchange rates for fallback use
+async function cacheExchangeRates(rates: ExchangeRates): Promise<void> {
+    try {
+        await chrome.storage.local.set({ 
+            cachedExchangeRates: rates,
+            cacheTimestamp: Date.now()
+        });
+    } catch (error) {
+        console.warn('Failed to cache exchange rates:', error);
+    }
+}
+
 // Fetch exchange rates immediately when the background script starts
-getExchangeRates().then(rates => exchangeRates = rates).catch(console.error);
+getExchangeRates()
+    .then(rates => {
+        exchangeRates = rates;
+        // Cache the rates for fallback use by ExchangeRatesService
+        cacheExchangeRates(rates);
+    })
+    .catch(console.error);
 
 // Set up a listener for messages from the content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -85,5 +103,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // Periodically refresh exchange rates (e.g., every hour)
 setInterval(() => {
-    getExchangeRates().then(rates => exchangeRates = rates).catch(console.error);
+    getExchangeRates()
+        .then(rates => {
+            exchangeRates = rates;
+            cacheExchangeRates(rates);
+        })
+        .catch(console.error);
 }, 3600000); // 3600000 ms = 1 hour
