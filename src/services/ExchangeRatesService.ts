@@ -25,27 +25,14 @@ export const ExchangeRates = {
 
     async getExchangeRates(): Promise<ExchangeRates> {
         try {
-            // Primary: Try GitHub-hosted rates (comprehensive coverage)
-            const githubRates = await this.fetchFromGitHub();
-            if (githubRates && Object.keys(githubRates).length > 30) {
-                console.log('✅ Using GitHub-hosted exchange rates:', Object.keys(githubRates).length, 'currencies');
-                this.exchangeRates = githubRates;
-                return githubRates;
+            // Background script now handles GitHub → CNB fallback automatically
+            const rates = await this.fetchFromBackground();
+            if (rates && Object.keys(rates).length > 0) {
+                this.exchangeRates = rates;
+                return rates;
             }
         } catch (error) {
-            console.warn('⚠️ GitHub rates failed, trying fallback:', error instanceof Error ? error.message : String(error));
-        }
-
-        try {
-            // Fallback: Use background script (Czech National Bank)
-            const cnbRates = await this.fetchFromBackground();
-            if (cnbRates && Object.keys(cnbRates).length > 0) {
-                console.log('✅ Using CNB fallback rates:', Object.keys(cnbRates).length, 'currencies');
-                this.exchangeRates = cnbRates;
-                return cnbRates;
-            }
-        } catch (error) {
-            console.warn('⚠️ CNB fallback failed:', error instanceof Error ? error.message : String(error));
+            console.warn('⚠️ Background script failed, using cached/default rates:', error instanceof Error ? error.message : String(error));
         }
 
         // Ultimate fallback: Use cached rates or minimal defaults
@@ -53,51 +40,6 @@ export const ExchangeRates = {
         console.log('⚠️ Using cached/default rates:', Object.keys(cachedRates).length, 'currencies');
         this.exchangeRates = cachedRates;
         return cachedRates;
-    },
-
-    async fetchFromGitHub(): Promise<ExchangeRates> {
-        // TODO: Change back to 'main' before merging to production
-        const branch = 'add-countries'; // For testing - use current branch
-        const githubUrl = `https://raw.githubusercontent.com/janca/ikea-price-scout/${branch}/src/data/exchange_rates.json`;
-        
-        const response = await fetch(githubUrl, {
-            cache: 'no-cache', // Always get fresh data
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`GitHub fetch failed: ${response.status} ${response.statusText}`);
-        }
-
-        const data: GitHubExchangeRateData = await response.json();
-
-        // Validate data structure
-        if (!data.rates || !data.lastUpdated || !data.baseCurrency) {
-            throw new Error('Invalid GitHub data structure');
-        }
-
-        // Check if rates are fresh (less than 3 days old)
-        const lastUpdated = new Date(data.lastUpdated);
-        const now = new Date();
-        const hoursDiff = (now.getTime() - lastUpdated.getTime()) / (1000 * 3600);
-
-        if (hoursDiff > 72) {
-            console.warn(`⚠️ GitHub rates are stale (${Math.round(hoursDiff)} hours old)`);
-            // Don't throw error, still use the rates but warn
-        }
-
-        // Validate critical currencies
-        const criticalCurrencies = ['USD', 'EUR', 'GBP', 'JPY'];
-        const missingCritical = criticalCurrencies.filter(curr => !data.rates[curr]);
-        
-        if (missingCritical.length > 0) {
-            throw new Error(`Missing critical currencies: ${missingCritical.join(', ')}`);
-        }
-
-        console.log(`📊 GitHub rates loaded: ${data.coverage.totalCurrencies} currencies, updated ${Math.round(hoursDiff)}h ago`);
-        return data.rates;
     },
 
     async fetchFromBackground(): Promise<ExchangeRates> {

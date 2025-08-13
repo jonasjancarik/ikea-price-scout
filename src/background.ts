@@ -20,26 +20,79 @@ chrome.runtime.onInstalled.addListener(function (details) {
     }
 });
 
-// Function to fetch exchange rates from the API
+// Function to fetch exchange rates from GitHub (primary) or CNB (fallback)
 async function fetchExchangeRates(): Promise<ExchangeRates> {
-    const url = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
     try {
-        const response = await fetch(url);
-        const text = await response.text();
-        const lines = text.split('\n').slice(2); // Skip the first two lines
-        const newRates: ExchangeRates = {};
-        lines.forEach(line => {
-            const [, , , code, rate] = line.split('|');
-            if (code && rate) {
-                newRates[code] = parseFloat(rate.replace(',', '.'));
-            }
-        });
-        console.log('Exchange rates fetched:', newRates);
-        return newRates;
+        // Primary: Try GitHub-hosted rates (comprehensive coverage)
+        const githubRates = await fetchFromGitHub();
+        if (githubRates && Object.keys(githubRates).length > 30) {
+            console.log('✅ Background: Using GitHub-hosted exchange rates:', Object.keys(githubRates).length, 'currencies');
+            return githubRates;
+        }
     } catch (error) {
-        console.error('Error fetching exchange rates:', error);
+        console.warn('⚠️ Background: GitHub rates failed, trying CNB fallback:', error instanceof Error ? error.message : String(error));
+    }
+
+    try {
+        // Fallback: Czech National Bank
+        const cnbRates = await fetchFromCNB();
+        console.log('✅ Background: Using CNB fallback rates:', Object.keys(cnbRates).length, 'currencies');
+        return cnbRates;
+    } catch (error) {
+        console.error('❌ Background: All exchange rate sources failed:', error);
         throw error;
     }
+}
+
+// Fetch from GitHub-hosted exchange rates
+async function fetchFromGitHub(): Promise<ExchangeRates> {
+    // TODO: Change back to 'main' before merging to production
+    const branch = 'add-countries'; // For testing - use current branch
+    const githubUrl = `https://raw.githubusercontent.com/janca/ikea-price-scout/${branch}/src/data/exchange_rates.json`;
+    
+    const response = await fetch(githubUrl, {
+        cache: 'no-cache',
+        headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+        throw new Error(`GitHub fetch failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Validate data structure
+    if (!data.rates || !data.lastUpdated || !data.baseCurrency) {
+        throw new Error('Invalid GitHub data structure');
+    }
+
+    // Check if rates are fresh (less than 3 days old)
+    const lastUpdated = new Date(data.lastUpdated);
+    const now = new Date();
+    const hoursDiff = (now.getTime() - lastUpdated.getTime()) / (1000 * 3600);
+
+    if (hoursDiff > 72) {
+        console.warn(`⚠️ Background: GitHub rates are stale (${Math.round(hoursDiff)} hours old)`);
+    }
+
+    console.log(`📊 Background: GitHub rates loaded: ${data.coverage?.totalCurrencies || Object.keys(data.rates).length} currencies, updated ${Math.round(hoursDiff)}h ago`);
+    return data.rates;
+}
+
+// Fetch from Czech National Bank (fallback)
+async function fetchFromCNB(): Promise<ExchangeRates> {
+    const url = 'https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
+    const response = await fetch(url);
+    const text = await response.text();
+    const lines = text.split('\n').slice(2); // Skip the first two lines
+    const newRates: ExchangeRates = {};
+    lines.forEach(line => {
+        const [, , , code, rate] = line.split('|');
+        if (code && rate) {
+            newRates[code] = parseFloat(rate.replace(',', '.'));
+        }
+    });
+    return newRates;
 }
 
 // Function to get exchange rates, using cache if possible
