@@ -70,7 +70,10 @@ export const IkeaPriceUtils = {
         return new Promise((resolve) => {
             chrome.storage.sync.get(['selectedCountries'], (result) => {
                 if (result.selectedCountries && Array.isArray(result.selectedCountries)) {
-                    const comparisonCountries = result.selectedCountries.map((stored) => ({
+                    // Filter out home country and map to comparison countries
+                    const comparisonCountries = result.selectedCountries
+                        .filter((stored) => !stored.isHome)
+                        .map((stored) => ({
                         country: this.extractCountryCode(stored.url),
                         language: stored.language,
                         name: stored.country,
@@ -79,13 +82,9 @@ export const IkeaPriceUtils = {
                     resolve(comparisonCountries);
                 }
                 else {
-                    // Fallback to original hardcoded countries if no selection found
-                    resolve([
-                        { country: 'pl', language: 'pl', name: 'Poland', currencyCode: 'PLN' },
-                        { country: 'de', language: 'de', name: 'Germany', currencyCode: 'EUR' },
-                        { country: 'at', language: 'de', name: 'Austria', currencyCode: 'EUR' },
-                        { country: 'sk', language: 'sk', name: 'Slovakia', currencyCode: 'EUR' },
-                    ]);
+                    // No countries selected - return empty array
+                    // User needs to configure countries via popup
+                    resolve([]);
                 }
             });
         });

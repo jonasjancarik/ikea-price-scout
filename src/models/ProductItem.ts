@@ -25,8 +25,24 @@ export class ProductItem {
     async fetchAndCalculateOtherCountries() {
         const { selectedCountries } = await chrome.storage.sync.get(['selectedCountries']);
         const otherCountryDetails = await IkeaPriceUtils.fetchForeignPrices(this.id);
+        
+        // Extract country codes from selected countries for filtering
+        // New format: selectedCountries contains objects with url property
+        let selectedCountryCodes: string[] = [];
+        if (selectedCountries && Array.isArray(selectedCountries)) {
+            selectedCountryCodes = selectedCountries
+                .filter((stored: any) => !stored.isHome) // Only comparison countries, not home country
+                .map((stored: any) => {
+                    if (stored && stored.url) {
+                        return IkeaPriceUtils.extractCountryCode(stored.url);
+                    }
+                    return null;
+                })
+                .filter((code: string | null): code is string => code !== null);
+        }
+        
         this.otherCountries = await Promise.all(otherCountryDetails
-            .filter(details => selectedCountries ? selectedCountries.includes(details.country) : true)
+            .filter(details => selectedCountryCodes.length === 0 || selectedCountryCodes.includes(details.country))
             .map(async (details) => {
                 const priceDiff = details.isAvailable
                     ? await IkeaPriceUtils.calculatePriceDifference(this.localPricePerItem, details)

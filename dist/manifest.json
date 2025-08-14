@@ -2,12 +2,13 @@
   "manifest_version": 3,
   "name": "IKEA Price Scout",
   "version": "0.5.2",
-  "description": "Compare IKEA product prices across different country websites. Currently works for Czechia only, more countries coming soon.",
+  "description": "Compare IKEA product prices across 67 countries worldwide. Select your home country and comparison countries for intelligent price comparison.",
   "permissions": [
     "storage"
   ],
   "host_permissions": [
-    "https://*.ikea.com/cz/*",
+    "https://*.ikea.com/*/*",
+    "https://*.ikea.cn/*/*",
     "https://www.cnb.cz/*",
     "https://raw.githubusercontent.com/jonasjancarik/ikea-price-scout/*"
   ],
@@ -18,8 +19,10 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.ikea.com/cz/*/p/*",
-        "https://*.ikea.com/cz/*/shoppingcart/"
+        "https://*.ikea.com/*/*/p/*",
+        "https://*.ikea.com/*/*/shoppingcart/",
+        "https://*.ikea.cn/*/*/p/*",
+        "https://*.ikea.cn/*/*/shoppingcart/"
       ],
       "js": [
         "content-script.js"

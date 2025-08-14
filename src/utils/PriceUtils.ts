@@ -71,6 +71,7 @@ interface StoredCountry {
     country: string;
     language: string;
     url: string;
+    isHome?: boolean;
 }
 
 interface ComparisonCountry {
@@ -96,21 +97,20 @@ export const IkeaPriceUtils = {
         return new Promise((resolve) => {
             chrome.storage.sync.get(['selectedCountries'], (result) => {
                 if (result.selectedCountries && Array.isArray(result.selectedCountries)) {
-                    const comparisonCountries = result.selectedCountries.map((stored: StoredCountry) => ({
-                        country: this.extractCountryCode(stored.url),
-                        language: stored.language,
-                        name: stored.country,
-                        currencyCode: currencyMapping[stored.country] || 'EUR'
-                    }));
+                    // Filter out home country and map to comparison countries
+                    const comparisonCountries = result.selectedCountries
+                        .filter((stored: StoredCountry) => !stored.isHome)
+                        .map((stored: StoredCountry) => ({
+                            country: this.extractCountryCode(stored.url),
+                            language: stored.language,
+                            name: stored.country,
+                            currencyCode: currencyMapping[stored.country] || 'EUR'
+                        }));
                     resolve(comparisonCountries);
                 } else {
-                    // Fallback to original hardcoded countries if no selection found
-                    resolve([
-                        { country: 'pl', language: 'pl', name: 'Poland', currencyCode: 'PLN' },
-                        { country: 'de', language: 'de', name: 'Germany', currencyCode: 'EUR' },
-                        { country: 'at', language: 'de', name: 'Austria', currencyCode: 'EUR' },
-                        { country: 'sk', language: 'sk', name: 'Slovakia', currencyCode: 'EUR' },
-                    ]);
+                    // No countries selected - return empty array
+                    // User needs to configure countries via popup
+                    resolve([]);
                 }
             });
         });

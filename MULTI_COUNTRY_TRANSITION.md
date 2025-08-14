@@ -118,13 +118,24 @@ comparisonCountries: [
 
 **Commit**: `e862461` - feat: implement dynamic country selection in PriceUtils
 
-#### ✅ Task 1.2: Fix ProductItem Country Filtering
+#### ✅ Task 1.2: Fix ProductItem Country Filtering **[COMPLETED]**
 **File**: `src/models/ProductItem.ts`
 **Actions**:
-- [ ] Update filtering logic to work with new storage format
-- [ ] Extract country codes from storage objects properly
-- [ ] Test filtering with different country combinations
-- [ ] Ensure quantity updates work correctly
+- [x] Update filtering logic to work with new storage format
+- [x] Extract country codes from storage objects properly
+- [x] Test filtering with different country combinations
+- [x] Ensure quantity updates work correctly
+
+**✅ Implementation Details**:
+- Fixed filtering logic mismatch between storage format and country codes
+- Added backward compatibility for both old format (strings) and new format (objects)
+- Old format: `['pl', 'de', 'at', 'sk']` → directly used as country codes
+- New format: `[{country: "Germany", url: "https://www.ikea.com/de/de/"}]` → extract codes from URLs
+- Reused existing `IkeaPriceUtils.extractCountryCode()` method for consistency
+- Quantity update methods verified working correctly
+- Build and compilation successful
+
+**Commit**: `[current changes]` - feat: fix ProductItem country filtering for multi-country system
 
 #### ✅ Task 1.3: Create Currency Mapping System **[COMPLETED]**
 ~~**New File**: `src/data/currency_mapping.json`~~
@@ -288,9 +299,15 @@ comparisonCountries: [
 ### Immediate Next Steps
 1. ~~**Start with Task 1.1**: Update PriceUtils to use dynamic countries~~ **✅ COMPLETED**
 2. ~~**Create currency mapping**: Research and document all 67 country currencies~~ **✅ COMPLETED**
+<<<<<<< Updated upstream
 3. **Fix ProductItem filtering**: Ensure user selections are respected **← NEXT PRIORITY**
 4. **Test basic functionality**: Verify price fetching works with new system
 5. **Implement GitHub Actions exchange rate system**: For comprehensive currency coverage
+=======
+3. ~~**Implement GitHub Actions exchange rate system**: For comprehensive currency coverage~~ **✅ COMPLETED**
+4. ~~**Fix ProductItem filtering**: Ensure user selections are respected~~ **✅ COMPLETED**
+5. **Test basic functionality**: Verify price fetching works with new system
+>>>>>>> Stashed changes
 
 ### Development Environment
 - Ensure `npm run build:dev` works correctly
@@ -301,11 +318,16 @@ comparisonCountries: [
 ---
 
 *Last Updated: December 2024*
+<<<<<<< Updated upstream
 *Status: In Progress - Task 1.1 ✅ COMPLETED (Dynamic Countries), Next: Task 1.2 (ProductItem Filtering)*
+=======
+*Status: Phase 1 Core Functionality Complete ✅ - Next: Task 2.1 (Home Country Flexibility)*
+>>>>>>> Stashed changes
 
 ## 📈 Progress Summary
 **✅ COMPLETED**: 
 - Task 1.1: Dynamic country selection in PriceUtils ✅
+- Task 1.2: ProductItem filtering logic ✅
 - Task 1.3: Comprehensive currency mapping system ✅
 - Task 3.1: Multi-source exchange rate system ✅
 - Task 3.2: Currency rate caching ✅
@@ -313,7 +335,7 @@ comparisonCountries: [
 - 67-country support infrastructure in place ✅
 
 **🔄 IN PROGRESS**: 
-- Task 1.2: ProductItem filtering logic (HIGH PRIORITY)
+- None currently
 
 **📋 PLANNED**: 
 - Home country flexibility

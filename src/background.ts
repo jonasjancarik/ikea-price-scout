@@ -8,13 +8,14 @@ let exchangeRates: ExchangeRates = {};
 
 chrome.runtime.onInstalled.addListener(function (details) {
     if (details.reason === "install" || details.reason === "update") {
-        // Set default countries
-        const defaultCountries = ['pl', 'de', 'at', 'sk'];
+        // Check if user has countries selected, if not they'll need to use the popup
         chrome.storage.sync.get(['selectedCountries'], function (result) {
             if (!result.selectedCountries || result.selectedCountries.length === 0) {
-                chrome.storage.sync.set({ selectedCountries: defaultCountries }, function () {
-                    console.log('Default countries set on installation/update');
-                });
+                console.log('No countries selected - user will need to configure via popup');
+                // Don't set defaults anymore - let users choose their countries
+                // This encourages proper setup of the multi-country system
+            } else {
+                console.log('User has', result.selectedCountries.length, 'countries configured');
             }
         });
     }
