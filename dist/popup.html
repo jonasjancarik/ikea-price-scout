@@ -6,129 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IKEA Price Scout - Settings</title>
     <style>
-<<<<<<< Updated upstream
         body {
             font-family: Arial, sans-serif;
             width: 350px;
             padding: 15px;
-=======
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
->>>>>>> Stashed changes
+            background: white;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            width: 400px;
-            max-height: 600px;
-            background: #f8f9fa;
-            color: #333;
-        }
-
-        .header {
-            background: #0058a3;
-            color: white;
-            padding: 16px 20px;
-            text-align: center;
-        }
-
-        .header h1 {
+        h1 {
             font-size: 18px;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .header p {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }
-
-        .content {
-            padding: 20px;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .section {
-            margin-bottom: 24px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #0058a3;
-        }
-
-        .step-indicator {
-            display: flex;
-            align-items: center;
-            margin-bottom: 16px;
-            font-size: 13px;
-        }
-
-        .step {
-            display: flex;
-            align-items: center;
-            margin-right: 16px;
-        }
-
-        .step-number {
-            background: #0058a3;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 600;
-            margin-right: 6px;
-        }
-
-        .step-number.completed {
-            background: #28a745;
-        }
-
-        .step-number.inactive {
-            background: #dee2e6;
-            color: #6c757d;
-        }
-
-        .search-box {
-            position: relative;
-            margin-bottom: 12px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 13px;
-            background: white;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #0058a3;
-            box-shadow: 0 0 0 2px rgba(0, 88, 163, 0.1);
-        }
-
-        .country-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-            padding: 12px;
-            background: white;
+            margin-bottom: 15px;
+            color: #0051ba;
         }
 
         .step {
@@ -140,10 +28,26 @@
             display: block;
         }
 
+        .step-indicator {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
         .country-option {
-<<<<<<< Updated upstream
             margin-bottom: 10px;
             padding: 5px;
+        }
+
+        .country-option label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .country-option input {
+            margin-right: 8px;
         }
 
         .suggested-countries {
@@ -157,6 +61,29 @@
             margin-top: 0;
             font-size: 14px;
             color: #666;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #0051ba;
+        }
+
+        .language-select {
+            margin-left: 10px;
+            padding: 2px 5px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
         }
 
         button {
@@ -167,268 +94,43 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 14px;
         }
 
         button:hover {
             background-color: #003d8f;
         }
 
-        #countrySearch {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-=======
-            display: flex;
-            align-items: center;
-            padding: 6px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-size: 13px;
-        }
-
-        .country-option:hover {
-            background: #f8f9fa;
->>>>>>> Stashed changes
-        }
-
-        .country-checkbox {
-            margin-right: 8px;
-            cursor: pointer;
-        }
-
-        .country-name {
-            font-weight: 500;
-        }
-
-        .suggested-countries {
-            margin-bottom: 16px;
-        }
-
-        .suggested-title {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .suggested-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .suggested-country {
-            background: #e3f2fd;
-            color: #0058a3;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            cursor: pointer;
-            border: 1px solid #bbdefb;
-            transition: all 0.2s;
-        }
-
-        .suggested-country:hover {
-            background: #0058a3;
-            color: white;
-        }
-
-        .language-section {
-            display: none;
-            margin-top: 16px;
-        }
-
-        .language-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .language-option {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 13px;
-        }
-
-        .language-option:hover {
-            border-color: #0058a3;
-        }
-
-        .language-option.selected {
-            background: #0058a3;
-            color: white;
-            border-color: #0058a3;
-        }
-
-        .selected-countries {
-            margin-top: 16px;
-        }
-
-        .selected-list {
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-            padding: 12px;
-            min-height: 60px;
-        }
-
-        .selected-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 8px;
-            margin-bottom: 4px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        .selected-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .remove-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 6px;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .remove-btn:hover {
-            background: #c82333;
-        }
-
-        .actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #0058a3;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #004785;
-        }
-
-        .btn-primary:disabled {
-            background: #6c757d;
+        button:disabled {
+            background-color: #ccc;
             cursor: not-allowed;
         }
 
-        .btn-secondary {
+        #statusMessage {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .country-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
             background: white;
-            color: #0058a3;
-            border: 1px solid #0058a3;
-        }
-
-        .btn-secondary:hover {
-            background: #f8f9fa;
-        }
-
-        .status-message {
-            margin-top: 12px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .status-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #6c757d;
-            font-style: italic;
-            font-size: 13px;
-        }
-
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            font-size: 13px;
-            color: #6c757d;
-        }
-
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e9ecef;
-            border-top: 2px solid #0058a3;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .step-indicator {
-            margin-bottom: 20px;
-            color: #666;
         }
     </style>
 </head>
 
 <body>
-<<<<<<< Updated upstream
     <h1>IKEA Price Scout - Nastavení</h1>
     
     <div id="step1" class="step active">
         <div class="step-indicator">Krok 1/2: Vyberte vaši domovskou zemi</div>
         <input type="text" id="homeCountrySearch" placeholder="Hledat zemi...">
-        <div id="homeCountryOptions"></div>
-        <button id="nextButton">Pokračovat</button>
+        <div id="homeCountryOptions" class="country-list"></div>
+        <button id="nextButton" disabled>Pokračovat</button>
     </div>
 
     <div id="step2" class="step">
@@ -438,78 +140,12 @@
             <div id="neighboringCountries"></div>
         </div>
         <input type="text" id="compareCountrySearch" placeholder="Hledat další země...">
-        <div id="otherCountries"></div>
+        <div id="otherCountries" class="country-list"></div>
         <button id="saveButton">Uložit nastavení</button>
     </div>
 
     <div id="statusMessage"></div>
-=======
-    <div class="header">
-        <h1>IKEA Price Scout</h1>
-        <p>Compare prices across 67 countries</p>
-    </div>
 
-    <div class="content">
-        <div class="step-indicator">
-            <div class="step">
-                <div class="step-number" id="step1-indicator">1</div>
-                <span>Select Home Country</span>
-            </div>
-            <div class="step">
-                <div class="step-number inactive" id="step2-indicator">2</div>
-                <span>Choose Comparison Countries</span>
-            </div>
-        </div>
-
-        <!-- Step 1: Home Country Selection -->
-        <div class="section" id="home-country-section">
-            <div class="section-title">Choose Your Home Country</div>
-            <div class="search-box">
-                <input type="text" class="search-input" id="home-search" placeholder="Search countries...">
-            </div>
-            <div class="country-grid" id="home-countries"></div>
-        </div>
-
-        <!-- Step 2: Comparison Countries Selection -->
-        <div class="section hidden" id="comparison-section">
-            <div class="section-title">Select Comparison Countries</div>
-            
-            <div class="suggested-countries" id="suggested-section">
-                <div class="suggested-title">Suggested (nearby countries):</div>
-                <div class="suggested-grid" id="suggested-countries"></div>
-            </div>
-
-            <div class="search-box">
-                <input type="text" class="search-input" id="comparison-search" placeholder="Search countries...">
-            </div>
-            <div class="country-grid" id="comparison-countries"></div>
-        </div>
-
-        <!-- Language Selection -->
-        <div class="language-section" id="language-section">
-            <div class="section-title">Select Language</div>
-            <div class="language-grid" id="language-options"></div>
-        </div>
-
-        <!-- Selected Countries -->
-        <div class="selected-countries">
-            <div class="section-title">Selected Countries (<span id="selected-count">0</span>)</div>
-            <div class="selected-list" id="selected-list">
-                <div class="empty-state">No countries selected</div>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="actions">
-            <button class="btn btn-secondary" id="reset-btn">Reset</button>
-            <button class="btn btn-primary" id="save-btn" disabled>Save Settings</button>
-        </div>
-
-        <!-- Status Message -->
-        <div id="status-message"></div>
-    </div>
-
->>>>>>> Stashed changes
     <script src="popup.js"></script>
 </body>
 
