@@ -30,7 +30,7 @@ describe('IKEA Price Scout Extension', () => {
     });
 
     const productUrls = [
-        'https://www.ikea.com/cz/cs/p/-s79477377/',
+        'https://www.ikea.com/cz/cs/p/-80275887/',
         'https://www.ikea.com/cz/cs/p/-30403571/',
         // Add more product URLs as needed
     ];
