@@ -8,13 +8,17 @@
       "runtimeArgs": [
         "--load-extension=${workspaceFolder}/dev-dist",
         "--start-maximized",
-        "--disable-extensions-except=${workspaceFolder}/dev-dist"
+        "--disable-extensions-except=${workspaceFolder}/dev-dist",
+        "--no-first-run",
+        "--user-data-dir=/tmp/chrome-test",
+        "--no-default-browser-check"
       ],
-      "url": "https://www.ikea.com/cz/cs/shoppingcart/",
-      // "url": "https://www.ikea.com/cz/cs/p/vimle-5m-rohova-rozkl-pohovka-s-lenoskou-grann-bomstad-cerna-s79477377/",
+      // "url": "https://www.ikea.com/cz/cs/shoppingcart/",
+      "url": "https://www.ikea.com/cz/cs/p/vimle-5m-rohova-rozkl-pohovka-s-lenoskou-grann-bomstad-cerna-s79477377/",
       "webRoot": "${workspaceFolder}/src",
       "sourceMaps": true,
-      "preLaunchTask": "build:dev"
+      "preLaunchTask": "build:dev",
+      "runtimeExecutable": "/Users/janca/chrome/mac_arm-139.0.7258.68/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
     },
     {
       "type": "firefox",
