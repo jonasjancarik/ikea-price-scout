@@ -48,8 +48,9 @@ export default async function initializeExtension(moduleUrls: ModuleUrls) {
                 const { selectedCountries } = await browserAPI.storage.sync.get(['selectedCountries']);
 
                 if (!selectedCountries || selectedCountries.length === 0) {
-                    console.log("No countries selected. Extension will not run.");
-                    return;
+                    const defaultCountries = ['pl', 'de', 'at', 'sk'];
+                    await browserAPI.storage.sync.set({ selectedCountries: defaultCountries });
+                    console.log('No countries selected. Default set by main.ts');
                 }
 
                 console.log("Initializing extension");
@@ -135,3 +136,28 @@ export default async function initializeExtension(moduleUrls: ModuleUrls) {
     }
 
 }
+
+// Self-initialize when this module is loaded by the content script
+(async () => {
+    try {
+        const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+        const moduleUrls = {
+            main: browserAPI.runtime.getURL('main.js'),
+            ProductPage: browserAPI.runtime.getURL('pages/ProductPage.js'),
+            CartPage: browserAPI.runtime.getURL('pages/CartPage.js'),
+            ExchangeRates: browserAPI.runtime.getURL('services/ExchangeRatesService.js'),
+            DisplayUtils: browserAPI.runtime.getURL('utils/DisplayUtils.js'),
+            DomUtils: browserAPI.runtime.getURL('utils/DomUtils.js'),
+            PriceUtils: browserAPI.runtime.getURL('utils/PriceUtils.js'),
+            ProductItem: browserAPI.runtime.getURL('models/ProductItem.js'),
+            ErrorUtils: browserAPI.runtime.getURL('utils/ErrorUtils.js'),
+            SelectorsService: browserAPI.runtime.getURL('services/SelectorsService.js'),
+            Selectors: browserAPI.runtime.getURL('selectors/selectors.json'),
+        } as unknown as ModuleUrls;
+
+        await initializeExtension(moduleUrls);
+    } catch (e) {
+        // If initialization fails, surface it in page console so tests can capture it
+        console.error('Failed to initialize IKEA Price Scout main module', e);
+    }
+})();

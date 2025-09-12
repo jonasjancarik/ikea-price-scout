@@ -1,7 +1,7 @@
 {
     "productPage": {
         "priceInteger": ".pip-price__integer",
-        "productName": ".pip-price-module__name",
+        "productName": ".pip-price-module__name-decorator",
         "priceAddons": ".pip-price-module__addon"
     },
     "cartPage": {

@@ -17,6 +17,16 @@ describe('IKEA Price Scout Extension', () => {
             ],
         });
         page = await browser.newPage();
+        page.on('console', (msg) => {
+            try {
+                const args = msg.args();
+                const text = args.length ? args.map((a) => a._remoteObject?.value).join(' ') : msg.text();
+                // Surface page console in Jest output
+                console.log(`[PAGE:${msg.type()}]`, text);
+            } catch (_) {
+                console.log(`[PAGE:${msg.type()}]`, msg.text());
+            }
+        });
         console.log('Setting up the browser...');
         await page.setViewport({
             width: 1920,
@@ -40,7 +50,7 @@ describe('IKEA Price Scout Extension', () => {
         await page.goto('about:blank');
         console.log('Navigating to product page...');
         try {
-            await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
             console.log('Navigation completed');
 
             // Check if we're on the correct page
@@ -72,7 +82,12 @@ describe('IKEA Price Scout Extension', () => {
         const comparisonDiv = await page.$('.price-scout-price-comparison');
         expect(comparisonDiv).not.toBeNull();
 
-        const comparisonText = await page.evaluate(el => el.textContent, comparisonDiv);  // todo: wait for Načítání cen to disappear
+        // Wait for loading state to disappear
+        await page.waitForFunction(() => {
+            const el = document.querySelector('.price-scout-price-comparison');
+            return !!el && !el.textContent?.includes('Načítání cen');
+        }, { timeout: 30000 });
+        const comparisonText = await page.evaluate(el => el.textContent, comparisonDiv);
         console.log('Comparison text:', comparisonText);
         expect(comparisonText).toContain('Cena v okolních zemích:');
         expect(comparisonText).toMatch(/Polsko|Německo|Rakousko|Slovensko/);
