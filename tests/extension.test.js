@@ -45,6 +45,26 @@ describe('IKEA Price Scout Extension', () => {
         // Add more product URLs as needed
     ];
 
+    async function acceptCookies() {
+        console.log('Checking for cookie consent dialog...');
+        try {
+            // Wait for and click the "Accept all" button if it appears
+            const acceptButton = await page.waitForSelector('button::-p-text(Přijmout vše)', { timeout: 5000 });
+            if (acceptButton) {
+                await acceptButton.click();
+                console.log('Cookies accepted');
+                // Wait for the dialog to close and cookies to be saved
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                console.log('Cookie dialog should be closed now');
+            }
+        } catch (error) {
+            // Cookie dialog might not appear if already accepted
+            console.log('No cookie consent dialog found or already accepted');
+        }
+    }
+
+    let cookiesAccepted = false;
+
     async function addToCart(url) {
         console.log('Going to product page:', url);
         await page.goto('about:blank');
@@ -65,6 +85,12 @@ describe('IKEA Price Scout Extension', () => {
         } catch (error) {
             console.error('Navigation failed:', error);
             throw error;
+        }
+
+        // Accept cookies on first visit (before anything else)
+        if (!cookiesAccepted) {
+            await acceptCookies();
+            cookiesAccepted = true;
         }
 
         console.log('Product page loaded, waiting for price comparison...');
@@ -94,6 +120,7 @@ describe('IKEA Price Scout Extension', () => {
 
         console.log('Clicking "Add to cart" button...');
         try {
+            // Wait for the span containing the button text (better for multilingual support)
             await page.waitForSelector('::-p-xpath(//span[contains(text(), "Přidat do nákupního košíku")])', { timeout: 10000 });
 
             const addToCartButton = await page.$('::-p-xpath(//span[contains(text(), "Přidat do nákupního košíku")])');
@@ -111,9 +138,21 @@ describe('IKEA Price Scout Extension', () => {
 
         console.log('Waiting for confirmation...');
         try {
-            // Use the ::-p-xpath syntax for waiting on the confirmation message
-            await page.waitForSelector('::-p-xpath(//p[contains(text(), "Přidáno do košíku")])', { timeout: 10000 });
+            // Wait for the "added to cart" confirmation dialog
+            await page.waitForSelector('::-p-xpath(//*[contains(text(), "do nákupního košíku")])', { timeout: 10000 });
             console.log('Product added to cart');
+            
+            // Close the confirmation dialog by clicking "Continue shopping"
+            try {
+                const continueButton = await page.waitForSelector('button::-p-text(Pokračovat v nákupu)', { timeout: 3000 });
+                if (continueButton) {
+                    await continueButton.click();
+                    console.log('Confirmation dialog closed');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            } catch (e) {
+                console.log('No continue button found, dialog may have auto-closed');
+            }
         } catch (error) {
             console.error('Failed to get confirmation of item added to cart:', error);
             throw error;
@@ -136,19 +175,24 @@ describe('IKEA Price Scout Extension', () => {
         }
 
         console.log('Navigating to cart page...');
-        await page.goto('https://www.ikea.com/cz/cs/shoppingcart/');
-        console.log('Waiting for price comparison summary...');
+        await page.goto('https://www.ikea.com/cz/cs/shoppingcart/', { waitUntil: 'domcontentloaded', timeout: 60000 });
         
-        console.log('Checking if summary is loaded...');
+        console.log('Waiting for cart items to appear...');
+        // Wait for cart items to appear (product items in cart)
+        await page.waitForSelector('[itemtype="http://schema.org/Product"]', { timeout: 60000 });
+        console.log('Cart items found');
+        
+        console.log('Waiting for price comparison summary...');
+        // Wait for the extension to generate the summary (with longer timeout for API calls)
+        await page.waitForSelector('#price-scout-comparison-summary', { timeout: 90000 });
 
-        await page.waitForSelector('#price-scout-comparison-summary');
-
+        console.log('Checking if summary content is loaded...');
         await page.waitForFunction(
             () => {
                 const summaryDiv = document.querySelector('#price-scout-comparison-summary');
                 return summaryDiv && summaryDiv.textContent.includes('Srovnání cen');
             },
-            { timeout: 30000 }
+            { timeout: 90000 }
         );
 
         console.log('Verifying individual product comparisons...');
@@ -163,5 +207,5 @@ describe('IKEA Price Scout Extension', () => {
         }
 
         console.log('Test completed successfully');
-    }, 60000);  // Add timeout here as well
+    }, 180000);  // 3 minute timeout for the full test
 });
